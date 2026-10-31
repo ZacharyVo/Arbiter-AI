@@ -10,6 +10,8 @@ from collections.abc import Sequence
 from typing import Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+from .adaptive import NextActionEstimate, RouteDecision, select_next_action
+from .novelty import NoveltyFlag, surface_duplicate_flags
 
 
 class Strict(BaseModel):
@@ -124,11 +126,22 @@ class DiscussionView(Strict):
     ideas: list[Idea]
     critiques: list[Critique]
     latest_positions: dict[str, Position]
+    research_observations: list['ResearchObservation'] = Field(default_factory=list)
+
+
+class ResearchObservation(Strict):
+    source_ref: str = Field(min_length=1)
+    summary: str = Field(min_length=1)
+    reported_cost_usd: float = Field(default=0, ge=0)
+    evidence_status: Literal['unverified', 'host_checked'] = 'unverified'
 
 
 class RoundTrace(Strict):
     round_number: int
-    phase: Literal['independent', 'discussion']
+    phase: Literal['independent', 'discussion', 'research']
+    research_observations: list[ResearchObservation] = Field(default_factory=list)
+    route_decision: RouteDecision | None = None
+    unattributed_api_cost_usd: float = Field(default=0, ge=0)
     contributions: list[Contribution] = Field(default_factory=list)
     new_ids: list[str] = Field(default_factory=list)
     errors: list[str] = Field(default_factory=list)
@@ -165,6 +178,8 @@ class BrainstormResult(Strict):
     scores: list[IdeaScore]
     unscored_ids: list[str]
     traces: list[RoundTrace]
+    research_observations: list[ResearchObservation] = Field(default_factory=list)
+    novelty_flags: list[NoveltyFlag] = Field(default_factory=list)
     reported_api_spent_usd: float
     notes: list[str]
 
@@ -220,6 +235,9 @@ def _score_ideas(req: BrainstormRequest, ideas: list[Idea], critiques: list[Crit
             dissents.append(Dissent(idea_id=idea_id, supporters=supporters, opponents=opponents))
     if dissents:
         notes.append('Unresolved disagreements preserved; no forced consensus or judge override.')
+    novelty_flags = surface_duplicate_flags(ideas)
+    if novelty_flags:
+        notes.append('Potential similar idea wording flagged; not deduplicated or semantically verified.')
     if any(s.values_source == 'agent_estimate' for s in scores):
         notes.append('Agent-supplied numeric estimates are unverified hypotheses, not measured outcomes.')
     if spent > req.max_api_budget_usd:
@@ -228,7 +246,9 @@ def _score_ideas(req: BrainstormRequest, ideas: list[Idea], critiques: list[Crit
     return BrainstormResult(session_id=req.session_id, stop_reason=stop_reason,
                             status=status, selected_idea_id=selected, provisional_leader_id=leader,
                             ideas=ideas, critiques=critiques, latest_positions=positions, dissents=dissents,
-                            scores=scores, unscored_ids=unscored, traces=traces, reported_api_spent_usd=spent, notes=notes)
+                            scores=scores, unscored_ids=unscored, traces=traces,
+                            research_observations=[o for t in traces for o in t.research_observations],
+                            novelty_flags=novelty_flags, reported_api_spent_usd=spent, notes=notes)
 
 
 def consolidate_brainstorm(req: BrainstormRequest, traces: list[RoundTrace]) -> BrainstormResult:
@@ -245,10 +265,16 @@ def consolidate_brainstorm(req: BrainstormRequest, traces: list[RoundTrace]) -> 
     processed: list[RoundTrace] = []
     spent = req.initial_api_spent_usd
     for trace in traces:
+        if not processed and (trace.round_number != 0 or trace.phase != 'independent'):
+            raise ValueError('First trace must be independent round 0')
         if processed and trace.round_number <= processed[-1].round_number:
             raise ValueError('Traces must have increasing round_number')
-        if trace.phase != ('independent' if trace.round_number == 0 else 'discussion'):
+        if trace.phase not in ({'independent'} if trace.round_number == 0 else {'discussion', 'research'}):
             raise ValueError('Round phase does not match round number')
+        if trace.phase == 'research' and trace.contributions:
+            raise ValueError('Research round cannot contain agent contributions')
+        if trace.phase != 'research' and trace.research_observations:
+            raise ValueError('Only research round can contain research observations')
         if trace.round_number > req.max_discussion_rounds:
             raise ValueError('Trace round exceeds configured maximum')
         ids_new: list[str] = []
@@ -303,14 +329,20 @@ def consolidate_brainstorm(req: BrainstormRequest, traces: list[RoundTrace]) -> 
                 raise ValueError('Position points to unknown or not yet visible idea')
             positions[contrib.agent_id] = contrib.position
         known = all_known
-        reported = sum(c.reported_cost_usd or 0.0 for c in trace.contributions)
+        reported = (sum(c.reported_cost_usd or 0.0 for c in trace.contributions)
+                    + sum(o.reported_cost_usd for o in trace.research_observations)
+                    + trace.unattributed_api_cost_usd)
         # Trace reported cost is redundant: use contributions as source of truth.
         processed.append(trace.model_copy(update={'new_ids': ids_new, 'reported_cost_usd': reported}))
         spent += reported
     return _score_ideas(req, ideas, critiques, positions, processed, 'max_rounds', spent)
 
 
-async def run_brainstorm(req: BrainstormRequest, agents: Sequence[BrainstormAgent]) -> BrainstormResult:
+async def run_brainstorm(
+    req: BrainstormRequest, agents: Sequence[BrainstormAgent], *,
+    adaptive_forecasts: dict[int, list[NextActionEstimate]] | None = None,
+    research_fn=None,
+) -> BrainstormResult:
     """Async independent generation -> collaborative discussion -> deterministic score.
 
     Errors are visible in round traces. Continuing is budget/VOI gated, but all
@@ -330,12 +362,15 @@ async def run_brainstorm(req: BrainstormRequest, agents: Sequence[BrainstormAgen
     stopped = 'max_rounds'
     no_new = 0
 
-    async def batch(number: int, phase: Literal['independent', 'discussion']):
+    async def batch(number: int, phase: Literal['independent', 'discussion'],
+                    participants: Sequence[BrainstormAgent] | None = None,
+                    route_decision: RouteDecision | None = None):
         snapshot = consolidate_brainstorm(req, traces)
         view = DiscussionView(session_id=req.session_id, objective=req.objective, domain=req.domain,
                               utility_unit=req.utility_unit, round_number=number,
                               ideas=snapshot.ideas, critiques=snapshot.critiques,
-                              latest_positions=snapshot.latest_positions)
+                              latest_positions=snapshot.latest_positions,
+                              research_observations=snapshot.research_observations)
         async def one(agent: BrainstormAgent):
             try:
                 result = await (agent.propose(view) if phase == 'independent' else agent.discuss(view))
@@ -344,10 +379,10 @@ async def run_brainstorm(req: BrainstormRequest, agents: Sequence[BrainstormAgen
                 return result
             except Exception as exc:
                 return f'{agent.agent_id}: {type(exc).__name__}: {str(exc)[:140]}'
-        outputs = await asyncio.gather(*(one(a) for a in agents))
+        outputs = await asyncio.gather(*(one(a) for a in (participants if participants is not None else agents)))
         contributions = [r for r in outputs if isinstance(r, Contribution)]
         errors = [r for r in outputs if isinstance(r, str)]
-        trace = RoundTrace(round_number=number, phase=phase, contributions=[], errors=errors)
+        trace = RoundTrace(round_number=number, phase=phase, contributions=[], errors=errors, route_decision=route_decision)
         # Validate per agent so one bad response cannot erase other agents' ideas.
         # Reported API costs are counted even if that response is invalid.
         trace.reported_cost_usd = sum(x.reported_cost_usd or 0 for x in contributions)
@@ -369,6 +404,9 @@ async def run_brainstorm(req: BrainstormRequest, agents: Sequence[BrainstormAgen
                     trace.contributions.append(contribution)
         else:
             trace.contributions = contributions
+        # Charge reported API cost even for rejected (but parsed) contributions.
+        trace.unattributed_api_cost_usd = max(0, sum(x.reported_cost_usd or 0 for x in contributions)
+                       - sum(x.reported_cost_usd or 0 for x in trace.contributions))
         preview = consolidate_brainstorm(req, traces + [trace])
         trace.new_ids = [i.id for i in preview.ideas if i.created_in_round == number]
         traces.append(trace)
@@ -377,8 +415,9 @@ async def run_brainstorm(req: BrainstormRequest, agents: Sequence[BrainstormAgen
     def spent():
         return req.initial_api_spent_usd + sum(t.reported_cost_usd for t in traces)
 
-    def can_start():
-        return spent() + sum(a.reserved_api_cost_usd for a in agents) <= req.max_api_budget_usd + 1e-12
+    def can_start(participants=None):
+        pool = participants if participants is not None else agents
+        return spent() + sum(a.reserved_api_cost_usd for a in pool) <= req.max_api_budget_usd + 1e-12
 
     if not can_start():
         # All seeded ideas remain auditable even when no call can be authorized.
@@ -391,6 +430,53 @@ async def run_brainstorm(req: BrainstormRequest, agents: Sequence[BrainstormAgen
         stopped = 'budget_exceeded'
     else:
         for number in range(1, req.max_discussion_rounds + 1):
+            if adaptive_forecasts is not None:
+                route = select_next_action(adaptive_forecasts.get(number, []),
+                    remaining_api_budget_usd=max(0, req.max_api_budget_usd - spent()),
+                    reservations_usd={a.agent_id: a.reserved_api_cost_usd for a in agents},
+                    retriever_available=research_fn is not None)
+                if route.action == 'stop':
+                    stopped = ('estimated_budget_insufficient' if route.reason == 'all_actions_unavailable_or_over_budget'
+                               else 'information_not_worth_cost')
+                    break
+                if route.action == 'retrieve':
+                    snapshot = consolidate_brainstorm(req, traces)
+                    view = DiscussionView(session_id=req.session_id, objective=req.objective,
+                        domain=req.domain, utility_unit=req.utility_unit, round_number=number,
+                        ideas=snapshot.ideas, critiques=snapshot.critiques,
+                        latest_positions=snapshot.latest_positions,
+                        research_observations=snapshot.research_observations)
+                    try:
+                        observation = await research_fn(view)
+                        if not isinstance(observation, ResearchObservation):
+                            raise ValueError('Retriever must return ResearchObservation')
+                        trace = RoundTrace(round_number=number, phase='research',
+                                           research_observations=[observation], route_decision=route)
+                    except Exception as exc:
+                        trace = RoundTrace(round_number=number, phase='research', route_decision=route,
+                                           errors=[f'research: {type(exc).__name__}: {str(exc)[:140]}'])
+                    traces.append(trace)
+                    if spent() > req.max_api_budget_usd:
+                        stopped = 'budget_exceeded'
+                        break
+                    continue
+                selected_agents = ([a for a in agents if a.agent_id == route.agent_id]
+                                   if route.action == 'consult_agent' else agents)
+                if not can_start(selected_agents):
+                    stopped = 'estimated_budget_insufficient'
+                    break
+                new_count, _ = await batch(number, 'discussion', selected_agents, route)
+                if spent() > req.max_api_budget_usd:
+                    stopped = 'budget_exceeded'
+                    break
+                if new_count:
+                    no_new = 0
+                else:
+                    no_new += 1
+                    if no_new >= req.stop_after_no_new_rounds:
+                        stopped = 'no_new_ideas'
+                        break
+                continue
             estimate = req.round_information_estimates.get(number)
             if estimate and estimate.expected_decision_gain <= estimate.discussion_cost_utility:
                 stopped = 'information_not_worth_cost'

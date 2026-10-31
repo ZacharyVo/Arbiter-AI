@@ -7,6 +7,15 @@ from .core import evaluate_decision
 from .information import plan_information
 from .feedback import FeedbackStore
 from .collaboration import BrainstormRequest, RoundTrace, BrainstormResult, consolidate_brainstorm
+from .adaptive import NextActionEstimate, RouteDecision, select_next_action
+
+
+class RoutePayload(BaseModel):
+    forecasts: list[NextActionEstimate]
+    remaining_api_budget_usd: float = Field(ge=0)
+    agent_reservations_usd: dict[str, float]
+    retriever_available: bool = False
+    minimum_net_gain: float = Field(default=0, ge=0)
 
 
 class TranscriptPayload(BaseModel):
@@ -16,7 +25,7 @@ class TranscriptPayload(BaseModel):
 
 def create_app():
     from fastapi import FastAPI, HTTPException
-    app = FastAPI(title='Arbiter AI Collaborative', version='0.3.0')
+    app = FastAPI(title='PluralForge AI', version='0.4.0')
 
     @app.post('/v1/evaluate', response_model=DecisionResult)
     def evaluate(req: DecisionRequest):
@@ -25,6 +34,14 @@ def create_app():
     @app.post('/v1/research', response_model=ResearchRecommendation)
     def research(req: ResearchRequest):
         return plan_information(req)
+
+    @app.post('/v1/next-step', response_model=RouteDecision)
+    def next_step(payload: RoutePayload):
+        return select_next_action(payload.forecasts,
+            remaining_api_budget_usd=payload.remaining_api_budget_usd,
+            reservations_usd=payload.agent_reservations_usd,
+            retriever_available=payload.retriever_available,
+            minimum_net_gain=payload.minimum_net_gain)
 
     @app.post('/v1/brainstorm', response_model=BrainstormResult)
     def brainstorm(payload: TranscriptPayload):

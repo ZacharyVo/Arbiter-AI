@@ -1,0 +1,257 @@
+{
+  "disclaimer": "Scripted synthetic fixtures only; no LLM superiority demonstrated. No real API called.",
+  "equal_budget_caps": true,
+  "cases": 5,
+  "summary": {
+    "single_agent": {
+      "tasks": 5,
+      "mean_synthetic_utility": 45.2,
+      "mean_synthetic_regret": 6.0,
+      "mean_reported_api_usd": 0.004,
+      "mean_candidates": 1.0
+    },
+    "plurality_vote": {
+      "tasks": 5,
+      "mean_synthetic_utility": 45.2,
+      "mean_synthetic_regret": 6.0,
+      "mean_reported_api_usd": 0.012,
+      "mean_candidates": 2.0
+    },
+    "fixed_discussion": {
+      "tasks": 5,
+      "mean_synthetic_utility": 50.8,
+      "mean_synthetic_regret": 0.4,
+      "mean_reported_api_usd": 0.027,
+      "mean_candidates": 3.0
+    },
+    "adaptive": {
+      "tasks": 5,
+      "mean_synthetic_utility": 50.8,
+      "mean_synthetic_regret": 0.4,
+      "mean_reported_api_usd": 0.017,
+      "mean_candidates": 3.0
+    }
+  },
+  "rows": [
+    {
+      "scenario": "release",
+      "domain": "software",
+      "policy": "single_agent",
+      "choice": "A",
+      "synthetic_realized_utility": 45,
+      "synthetic_regret": 10,
+      "reported_api_cost_usd": 0.004,
+      "budget_cap_usd": 0.06,
+      "idea_count": 1
+    },
+    {
+      "scenario": "release",
+      "domain": "software",
+      "policy": "plurality_vote",
+      "choice": "A",
+      "synthetic_realized_utility": 45,
+      "synthetic_regret": 10,
+      "reported_api_cost_usd": 0.012,
+      "budget_cap_usd": 0.06,
+      "idea_count": 2
+    },
+    {
+      "scenario": "release",
+      "domain": "software",
+      "policy": "fixed_discussion",
+      "choice": "C",
+      "synthetic_realized_utility": 55,
+      "synthetic_regret": 0,
+      "reported_api_cost_usd": 0.027,
+      "budget_cap_usd": 0.06,
+      "idea_count": 3
+    },
+    {
+      "scenario": "release",
+      "domain": "software",
+      "policy": "adaptive",
+      "choice": "C",
+      "synthetic_realized_utility": 55,
+      "synthetic_regret": 0,
+      "reported_api_cost_usd": 0.017,
+      "budget_cap_usd": 0.06,
+      "idea_count": 3
+    },
+    {
+      "scenario": "experiment",
+      "domain": "research",
+      "policy": "single_agent",
+      "choice": "A",
+      "synthetic_realized_utility": 54,
+      "synthetic_regret": 0,
+      "reported_api_cost_usd": 0.004,
+      "budget_cap_usd": 0.06,
+      "idea_count": 1
+    },
+    {
+      "scenario": "experiment",
+      "domain": "research",
+      "policy": "plurality_vote",
+      "choice": "A",
+      "synthetic_realized_utility": 54,
+      "synthetic_regret": 0,
+      "reported_api_cost_usd": 0.012,
+      "budget_cap_usd": 0.06,
+      "idea_count": 2
+    },
+    {
+      "scenario": "experiment",
+      "domain": "research",
+      "policy": "fixed_discussion",
+      "choice": "A",
+      "synthetic_realized_utility": 54,
+      "synthetic_regret": 0,
+      "reported_api_cost_usd": 0.027,
+      "budget_cap_usd": 0.06,
+      "idea_count": 3
+    },
+    {
+      "scenario": "experiment",
+      "domain": "research",
+      "policy": "adaptive",
+      "choice": "A",
+      "synthetic_realized_utility": 54,
+      "synthetic_regret": 0,
+      "reported_api_cost_usd": 0.017,
+      "budget_cap_usd": 0.06,
+      "idea_count": 3
+    },
+    {
+      "scenario": "supplier",
+      "domain": "procurement",
+      "policy": "single_agent",
+      "choice": "A",
+      "synthetic_realized_utility": 33,
+      "synthetic_regret": 19,
+      "reported_api_cost_usd": 0.004,
+      "budget_cap_usd": 0.06,
+      "idea_count": 1
+    },
+    {
+      "scenario": "supplier",
+      "domain": "procurement",
+      "policy": "plurality_vote",
+      "choice": "A",
+      "synthetic_realized_utility": 33,
+      "synthetic_regret": 19,
+      "reported_api_cost_usd": 0.012,
+      "budget_cap_usd": 0.06,
+      "idea_count": 2
+    },
+    {
+      "scenario": "supplier",
+      "domain": "procurement",
+      "policy": "fixed_discussion",
+      "choice": "C",
+      "synthetic_realized_utility": 52,
+      "synthetic_regret": 0,
+      "reported_api_cost_usd": 0.027,
+      "budget_cap_usd": 0.06,
+      "idea_count": 3
+    },
+    {
+      "scenario": "supplier",
+      "domain": "procurement",
+      "policy": "adaptive",
+      "choice": "C",
+      "synthetic_realized_utility": 52,
+      "synthetic_regret": 0,
+      "reported_api_cost_usd": 0.017,
+      "budget_cap_usd": 0.06,
+      "idea_count": 3
+    },
+    {
+      "scenario": "support",
+      "domain": "operations",
+      "policy": "single_agent",
+      "choice": "A",
+      "synthetic_realized_utility": 42,
+      "synthetic_regret": 1,
+      "reported_api_cost_usd": 0.004,
+      "budget_cap_usd": 0.06,
+      "idea_count": 1
+    },
+    {
+      "scenario": "support",
+      "domain": "operations",
+      "policy": "plurality_vote",
+      "choice": "A",
+      "synthetic_realized_utility": 42,
+      "synthetic_regret": 1,
+      "reported_api_cost_usd": 0.012,
+      "budget_cap_usd": 0.06,
+      "idea_count": 2
+    },
+    {
+      "scenario": "support",
+      "domain": "operations",
+      "policy": "fixed_discussion",
+      "choice": "C",
+      "synthetic_realized_utility": 43,
+      "synthetic_regret": 0,
+      "reported_api_cost_usd": 0.027,
+      "budget_cap_usd": 0.06,
+      "idea_count": 3
+    },
+    {
+      "scenario": "support",
+      "domain": "operations",
+      "policy": "adaptive",
+      "choice": "C",
+      "synthetic_realized_utility": 43,
+      "synthetic_regret": 0,
+      "reported_api_cost_usd": 0.017,
+      "budget_cap_usd": 0.06,
+      "idea_count": 3
+    },
+    {
+      "scenario": "workshop",
+      "domain": "planning",
+      "policy": "single_agent",
+      "choice": "A",
+      "synthetic_realized_utility": 52,
+      "synthetic_regret": 0,
+      "reported_api_cost_usd": 0.004,
+      "budget_cap_usd": 0.06,
+      "idea_count": 1
+    },
+    {
+      "scenario": "workshop",
+      "domain": "planning",
+      "policy": "plurality_vote",
+      "choice": "A",
+      "synthetic_realized_utility": 52,
+      "synthetic_regret": 0,
+      "reported_api_cost_usd": 0.012,
+      "budget_cap_usd": 0.06,
+      "idea_count": 2
+    },
+    {
+      "scenario": "workshop",
+      "domain": "planning",
+      "policy": "fixed_discussion",
+      "choice": "C",
+      "synthetic_realized_utility": 50,
+      "synthetic_regret": 2,
+      "reported_api_cost_usd": 0.027,
+      "budget_cap_usd": 0.06,
+      "idea_count": 3
+    },
+    {
+      "scenario": "workshop",
+      "domain": "planning",
+      "policy": "adaptive",
+      "choice": "C",
+      "synthetic_realized_utility": 50,
+      "synthetic_regret": 2,
+      "reported_api_cost_usd": 0.017,
+      "budget_cap_usd": 0.06,
+      "idea_count": 3
+    }
+  ]
+}

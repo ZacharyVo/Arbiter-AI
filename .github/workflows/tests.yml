@@ -17,3 +17,5 @@ jobs:
       - run: python -m pytest
       - run: python -m examples.collaborative_demo
       - run: python -m benchmarks.run_collaboration_benchmark
+      - run: python -m benchmarks.compare_policies
+      - run: python -m examples.adaptive_demo

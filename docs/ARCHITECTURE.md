@@ -1,53 +1,64 @@
-# Collaborative Architecture · v0.3
+# PluralForge AI — v0.4 Architecture
+
+## What this layer does
+
+A host application supplies a user objective, domain, budget, risk preferences and optional seed ideas. Independent model agents produce proposals. The collaborative engine circulates **public** proposals and critiques, allows wholly new options, and preserves dissent. The next-step router estimates *whether another action is worth its cost*. A deterministic scorer evaluates viable, fully specified options. Results are **recommendations only**.
 
 ```mermaid
 flowchart TD
-  H[Host objective / constraints / optional seed ideas] --> I[Round 0: independent generation]
-  I --> S[Shared structured, public conversation state]
-  S --> D[Round N: critique and propose NEW ideas]
-  D --> V{Continue worth cost?}
-  V -->|Yes: estimated gain > cost & budget| S
-  V -->|No / limit| P[Preserve every valid proposal and latest dissent]
-  P --> G[Evidence, risk and missing-input gates]
-  G --> E[Deterministic score engine]
-  E --> O[Proposal / needs estimates / needs review]
-  O --> F[Optional verified-outcome feedback]
+  A[Host objective / constraints / budget] --> I[Independent proposals from agents]
+  I --> S[Shared candidate set + critiques + dissent]
+  S --> F[Host supplied marginal value forecasts]
+  F --> R{Cost-aware next-step router}
+  R -->|Consult one agent| C[Targeted critique / novel idea]
+  R -->|Discuss all| D[Collaborative round]
+  R -->|Retrieve| K[External research hook]
+  R -->|Stop / budget gate| L[Keep all valid candidates and dissent]
+  C --> S
+  D --> S
+  K --> S
+  L --> V[Check data completeness, safety and lineage]
+  V --> E[Deterministic utility + cost + risk scoring]
+  E --> O[Proposed / needs estimates / needs review]
+  O --> B[Independent verified feedback & benchmarks]
 ```
 
-## Why this isn't a meta-judge
+## Next action policy
 
-- The engine does not ask an LLM which response wins.
-- Each independent agent sees only the host's seed ideas before initial submission.
-- Later rounds see the previous round's ideas, public critiques and stances. Agents may propose brand-new options, including combinations with parent IDs.
-- The latest support/oppose positions are preserved. They do **not** have to converge.
-- A deterministic scorer recommends among fully specified and feasible options. Unscored options block unconditional final selection. Risk warnings require review.
-- External feedback can update historical reliability but does not overwrite a discussion transcript or resolve disagreements by fiat.
+For each candidate action `a`, the *host* estimates:
 
-## Core data flow
+- `expected_decision_gain[a]`: expected improvement in the quality of the eventual decision, measured in the task's utility unit.
+- `execution_cost_utility[a]`: extra discussion, retrieval, and delay cost, converted into the **same** utility unit.
+- `estimated_api_cost_usd[a]`: API cash charge used **only** as a budget feasibility condition.
 
-`BrainstormRequest` → `DiscussionView` → `Contribution` (new ideas, critiques, stance, cost) → `RoundTrace` → `consolidate_brainstorm` → `BrainstormResult`.
+`net_information_value[a] = expected_decision_gain[a] - execution_cost_utility[a]`.
 
-External applications can use `consolidate_brainstorm` without sending provider data to this package: they run their own agents and pass a signed/curated transcript. The optional `run_brainstorm()` Asyncio orchestrator calls `.propose()` and `.discuss()` implementations for each agent in parallel. It validates and records the outputs; an invalid agent contribution cannot erase valid peers' ideas.
+After filtering actions lacking the required agent/retriever and actions whose **maximum** of external estimated API charge and agent preflight reservations exceeds remaining dollar budget, choose the largest positive net value. Otherwise return `stop`. No automatically calibrated VoI is assumed. USD and utility points are never subtracted directly.
 
-## Independent status vs scores
+This is a **myopic, one-step policy**. It does not solve a full POMDP or guarantee globally optimal action choices. Forecast quality is part of the host's responsibility and should be benchmarked separately.
 
-`IdeaDraft` utility numbers are **estimates**, not facts. Three fields plus explicit feasibility must be supplied to score: expected_utility, execution_cost, risk_loss, feasible. A new idea missing any field is left in `unscored_ids`, and `selected_idea_id` stays `null` until the gap is resolved. The scorer can still return a `provisional_leader_id` for the evaluated subset.
+## Discussion rules
 
-All numeric units must be commensurate. In `points` mode, user-provided execution cost and risk loss must be calibrated into points, not raw USD.
+- Round 0 is a parallel independent response phase; peers do not see each other's initial answers.
+- Later rounds can contact one or all agents. Each participant sees the consolidated earlier rounds and any recorded retrieval observations.
+- Agents may introduce candidates, assign `parent_ids` for lineage, critique visible candidates, and support or oppose them. They are never forced to change their opinions.
+- `ResearchObservation` records source and whether the host says it checked the evidence; source existence alone does not establish truth.
+- Incomplete/new proposals block an unconditional selection. They are displayed rather than discarded.
+- Untrusted or malformed agent contributions are rejected individually; reported paid API costs remain counted even if their output is rejected.
+- `novelty_flags` are conservative **surface-form** warnings, not semantic equivalence proofs. Similar-looking proposals are not merged.
 
-## Stopping policy
+## Decision engine
 
-1. `max_discussion_rounds` and `max_total_ideas` are hard **structural** limits.
-2. `stop_after_no_new_rounds` controls plateau stopping; generating no novel ideas is only a heuristic (new evidence or critique can still matter).
-3. When supplied, round-specific information value `expected_decision_gain` must exceed `discussion_cost_utility` **in the same utility unit**. These are external estimates, not computed from entropy.
-4. Reserved API spend is checked before each parallel batch, **but is only a preflight estimate**; provider billing may exceed it. Actual reported cost overruns stop further rounds and require review. Use provider quotas for enforcement.
+For feasible candidates with complete and comparable host/agent-supplied estimates:
 
-## Trust and security boundaries
+`net_utility = expected_utility - execution_cost - risk_aversion * risk_loss`.
 
-- The engine cannot verify external claims, costs, the origin of data, or the truth of model-generated arguments.
-- Model responses are untrusted. Invalid/duplicate IDs, nonexistent references, fabricated "verified" values, and cyclical ancestry are rejected.
-- Never execute an external action from a proposed option without host-side authorization.
-- Offline SDK works without network. A configured LiteLLM provider will receive objectives and argument data; do not send secrets without consent.
-- MCP and HTTP adapters are separate. The HTTP demo listens on localhost only and has no authentication; it is not suitable for public deployment.
-- No semantic deduplication in v0.3: structurally unique but substantively equivalent proposals can exist, and novelty is based on IDs. Future work: similarity + provenance-aware review, without silently merging dissent.
-- No causal reinforcement-learning result is claimed. Offline synthetic contract tests only prove code behavior, not improved model reasoning or objective decision quality.
+The scorer never silently fills blanks. Risk-warning critiques and explicit review policies can require human review. It does not use number-of-votes as an authority signal and cannot execute an action.
+
+## Boundaries
+
+- External utility estimates may be inconsistent, biased or false; scoring is conditional on their inputs.
+- Budget reservations are preflight estimates, not provider-side limits. A provider can still bill more than expected.
+- No trained controller, external truth verifier, automatic agent reputation update during deliberation, or genuine semantic deduplication is included in v0.4.
+- Only use local HTTP mode for development. Before public hosting, implement authorization, authentication, transport security, quotas, privacy controls and data retention policy.
+- MCP and LiteLLM are optional, not verified live-host integrations in this release.

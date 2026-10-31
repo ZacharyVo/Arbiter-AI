@@ -1,4 +1,4 @@
-"""Arbiter AI Collaborative: domain-neutral multi-agent idea exploration and evaluation."""
+"""PluralForge AI v0.4: cost-aware collective intelligence and decision optimization."""
 from .models import (Option, Opinion, DecisionRequest, DecisionResult, ResearchOption,
                      ResearchRequest, ResearchRecommendation, VerifiedOutcome, OutcomeReceipt)
 from .core import evaluate_decision, disagreement_entropy
@@ -9,11 +9,15 @@ from .collaboration import (IdeaDraft, Idea, CritiqueDraft, Critique, Position, 
                             IdeaScore, Dissent, BrainstormResult, consolidate_brainstorm,
                             run_brainstorm)
 from .brainstorm_agents import ScriptedBrainstormAgent, LiteLLMBrainstormAgent
-__version__ = '0.3.0'
+from .adaptive import NextActionEstimate, ActionRank, RouteDecision, select_next_action
+from .collaboration import ResearchObservation
+from .novelty import NoveltyFlag, surface_duplicate_flags
+__version__ = '0.4.0'
 __all__ = ['Option', 'Opinion', 'DecisionRequest', 'DecisionResult', 'ResearchOption',
            'ResearchRequest', 'ResearchRecommendation', 'VerifiedOutcome', 'OutcomeReceipt',
            'evaluate_decision', 'disagreement_entropy', 'plan_information', 'FeedbackStore',
            'IdeaDraft', 'Idea', 'CritiqueDraft', 'Critique', 'Position', 'Contribution',
            'InformationEstimate', 'BrainstormRequest', 'DiscussionView', 'RoundTrace',
            'IdeaScore', 'Dissent', 'BrainstormResult', 'consolidate_brainstorm',
-           'run_brainstorm', 'ScriptedBrainstormAgent', 'LiteLLMBrainstormAgent']
+           'run_brainstorm', 'ResearchObservation', 'NextActionEstimate', 'ActionRank',
+           'RouteDecision', 'select_next_action', 'NoveltyFlag', 'surface_duplicate_flags', 'ScriptedBrainstormAgent', 'LiteLLMBrainstormAgent']

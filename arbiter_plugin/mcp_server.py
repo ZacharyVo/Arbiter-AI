@@ -7,11 +7,12 @@ from .core import evaluate_decision
 from .information import plan_information
 from .feedback import FeedbackStore
 from .collaboration import BrainstormRequest, RoundTrace, consolidate_brainstorm
+from .adaptive import NextActionEstimate, select_next_action
 
 
 def create_mcp_server():
     from mcp.server import MCPServer  # optional official SDK v2
-    server = MCPServer('Arbiter AI Collaborative', instructions=(
+    server = MCPServer('PluralForge AI', instructions=(
         'Collect independent ideas and multiple rounds of open-ended discussion. '
         'Preserve dissent and unscored ideas; propose only, do not execute actions.'))
 
@@ -21,6 +22,16 @@ def create_mcp_server():
         req = BrainstormRequest.model_validate(payload['request'])
         traces = [RoundTrace.model_validate(t) for t in payload.get('traces', [])]
         return consolidate_brainstorm(req, traces).model_dump(mode='json')
+
+    @server.tool()
+    def pluralforge_plan_next_step(payload: dict[str, Any]) -> dict[str, Any]:
+        """Select next Agent/retrieval/stop from explicit, externally supplied utility forecasts."""
+        action = select_next_action(
+            [NextActionEstimate.model_validate(x) for x in payload.get('forecasts', [])],
+            remaining_api_budget_usd=float(payload['remaining_api_budget_usd']),
+            reservations_usd=payload.get('agent_reservations_usd', {}),
+            retriever_available=payload.get('retriever_available', False))
+        return action.model_dump(mode='json')
 
     @server.tool()
     def arbiter_evaluate(payload: dict[str, Any]) -> dict[str, Any]:

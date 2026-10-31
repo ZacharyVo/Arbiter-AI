@@ -1,199 +1,203 @@
-# Arbiter AI
+# PluralForge AI
 
-### Think together. Disagree intelligently. Decide systematically.
-
-**An open-source, domain-neutral decision layer for multi-agent AI.**
-
-Arbiter AI helps AI agents **brainstorm independently, challenge one another, generate new solutions, and preserve legitimate disagreements**. A separate, transparent decision engine then evaluates the proposed options against utility, cost, risk, and missing information—**without giving a single “judge” model the final say**.
-
-> **中文版简介：** Arbiter AI 是一个通用多智能体协作与决策插件。多个 Agent 可以先独立思考，再互相质疑、创造新的候选方案，最后保留不同意见，由独立评分引擎在成本、风险与信息约束下评估方案，而不是强制投票达成共识。
-
-**Current release:** Collaborative v0.3 · Research MVP · Python 3.11+ · MIT
+**Many minds. New ideas. Better decisions.**  
+**Cost-aware collective intelligence & decision optimization.**
 
 ![Offline interactive demo](docs/preview.png)
 
-## Why Arbiter AI?
+> **PluralForge** is an open-source, domain-neutral Python decision layer for multi-agent systems. Agents may independently propose ideas, challenge each other, synthesize **new options**, and **keep disagreeing**. An auditable utility scorer and a budget-aware next-step router decide what the *software recommends*, not an all-powerful meta-judge. It **never executes real-world actions**.
 
-Most multi-agent demos end in voting or ask another LLM to act as a final judge. Arbiter AI takes a different approach:
+**中文简介：** 通用多 Agent 协作决策插件：独立思考 → 交叉质疑 → 产生新方案 → 保留分歧 → 动态选择下一次讨论、检索或停止 → 可解释评分 → 独立验证。目标不是让 AI 达成共识，而是在预算、风险、不确定性约束下提升决策质量。
 
-- **Generate, don't just vote.** Agents can propose solutions that were absent from the original choice set.
-- **Preserve dissent.** Support, opposition, critiques, and unresolved concerns remain visible in the output.
-- **Separate deliberation from decisions.** AI models propose and debate; deterministic rules score eligible options.
-- **Account for limits.** Cost, risk, budgets, missing estimates, and a host-supplied estimate of further discussion value influence when to stop.
-- **Make the process inspectable.** Record round-by-round transcripts, proposal lineage, scores, and review requirements.
+**Status:** v0.4 research MVP · Python 3.11+ · MIT · offline-first. Optional integrations: LiteLLM, local REST API, MCP. The public `pluralforge` import path is new; `arbiter_plugin` imports are retained for compatibility.
 
-This library is intended to be used **inside** other AI applications, not to replace their prompts, tools, data sources, or execution/authorization systems.
+## Why this exists
 
-## How it works
+More model calls and longer debates do **not** necessarily produce better answers. PluralForge treats deliberation as an **investment decision**: compare the *expected improvement* of each available next step against its cost, while respecting the remaining API budget. It does **not** force consensus or presume the extra calls will help.
 
-```mermaid
-flowchart TD
-    A[Objective & constraints] --> B[Independent agent proposals]
-    B --> C[Collaborative rounds: critique and combine ideas]
-    C --> D{Is another round worth its cost?}
-    D -->|Yes, within budget| C
-    D -->|No or limit reached| E[Preserve proposals and dissent]
-    E --> F[Check feasibility, risk and missing estimates]
-    F --> G[Deterministic utility scoring]
-    G --> H[Proposal, review required or more data needed]
-    H --> I[Optional verified-outcome feedback]
-```
+### What is in v0.4
 
-**Important:** An agent may remain opposed to the highest-scoring proposal. The system does not erase that opposition or automatically execute any action.
+| Component | What it actually does | Important boundary |
+|---|---|---|
+| Independent brainstorming | Async agents propose separately before reading peers | External model calls require explicit setup |
+| Collaborative proposals | Agents critique, revise, combine and introduce new idea IDs with provenance | IDs alone do not establish semantic novelty |
+| Preserve dissent | Store support, opposition, and full discussion traces | Consensus is not a success metric |
+| Adaptive action routing **NEW** | Select `consult_agent`, `discuss_all`, `retrieve`, or `stop` by estimated **net information value** and reservations | Expected gains/costs are **external forecasts**, not automatically calibrated |
+| Novelty hints **NEW** | Surface-form similarity warnings, no forced merging | Not semantic embedding-based deduplication |
+| Decision scoring | `expected_utility - execution_cost - risk_aversion * risk_loss` | Missing estimates block final selection; all in the same utility unit |
+| Audit and feedback | SQLite verified-outcome records and clear source distinctions | No online reinforcement learning or auto-retraining yet |
+| Policy comparison **NEW** | Scripted cross-domain cases comparing single agent, voting, fixed discussion and adaptive routing | Synthetic illustrations **are not real LLM benchmark results** |
+| Interfaces | Python SDK, optional local HTTP and MCP tools | MCP handshake and paid model integrations require environment-specific testing |
 
-## Features
+## Installation
 
-| Capability | What v0.3 provides |
-|---|---|
-| Independent thinking | Agents contribute before seeing their peers' first-round answers |
-| Collaborative brainstorming | Subsequent rounds can critique, revise, and introduce new proposals |
-| Proposal lineage | New proposals may reference parent ideas |
-| Disagreement preservation | Structured support, opposition, critiques, and full round traces |
-| Decision scoring | Comparable expected utility − execution cost − risk penalty |
-| Cost-aware stopping | Discussion rounds, novelty plateau, budget checks, optional externally supplied information-value estimates |
-| SDK / integrations | Python SDK, optional MCP tools, local REST endpoints, LiteLLM adapter |
-| Feedback and evaluation | SQLite-based **verified** feedback; synthetic tests and benchmark examples |
-
-No stock-specific or other industry-specific rules are built into the core. Host applications supply domain knowledge, candidates, estimates, policy, and authorization.
-
-## Quick start
-
-Clone/download this repository, enter its root, then install in a Python 3.11+ environment:
-
-```bash
+```powershell
+# Windows / VS Code, from repository root
+py -3.12 -m venv .venv
+.venv\Scripts\Activate.ps1
 python -m pip install -e ".[dev]"
+
+python -m examples.adaptive_demo
 python -m examples.collaborative_demo
-python -m benchmarks.run_collaboration_benchmark
+python -m benchmarks.compare_policies
 python -m pytest
 ```
 
-On Windows you can use `py -3.12 -m venv .venv` and `.venv\Scripts\Activate.ps1` first. For macOS/Linux, use `python3 -m venv .venv` and `source .venv/bin/activate`.
+For Linux/macOS use `python3 -m venv .venv && source .venv/bin/activate`. None of the commands above make paid model calls.
 
-The default example is **scripted and offline**. It uses no API key and incurs no LLM charges.
+### GitHub Pages demonstration
 
-### Interactive browser demo
+Open [`docs/index.html`](docs/index.html) directly in a browser, or publish `/docs` through **Settings → Pages**. The offline webpage illustrates discussion rounds, disagreement, utility scoring and routing; it does not call a remote model.
 
-Open [`docs/index.html`](docs/index.html) in your browser. The standalone interactive page demonstrates:
+## One function: should we keep thinking?
 
-- Independent proposals and a new hybrid proposal in later rounds
-- Agent support/opposition that does **not** have to converge
-- Real-time changes in option rankings when costs change
-- An explicit “needs estimates” gate for options with unknown costs
+```python
+from pluralforge import NextActionEstimate, select_next_action
 
-The browser demo is a **scripted visualization**, not a live multi-model session. It can be published with GitHub Pages by serving the `/docs` folder.
+candidates = [
+    NextActionEstimate(
+        action="consult_agent", agent_id="critic",
+        expected_decision_gain=8, execution_cost_utility=2,
+        estimated_api_cost_usd=0.02,
+        rationale="Host estimates a targeted critique may reveal failure modes",
+    ),
+    NextActionEstimate(
+        action="discuss_all",
+        expected_decision_gain=7, execution_cost_utility=5,
+        estimated_api_cost_usd=0.08,
+        rationale="Full second discussion round",
+    ),
+]
 
-## Use as a Python library
+plan = select_next_action(
+    candidates,
+    remaining_api_budget_usd=0.05,
+    reservations_usd={"critic": 0.02, "builder": 0.03},
+)
+print(plan.action, plan.agent_id)  # consult_agent critic
+```
+
+`expected_decision_gain` and `execution_cost_utility` are in **the same decision utility unit** (e.g., calibrated points). API costs and reservations are measured separately in **USD**; the router does not subtract USD directly from abstract points. The `rationale` should record the origin of the forecast. The router filters unaffordable and unavailable actions and chooses the highest positive net value. If no action qualifies, it recommends `stop`.
+
+**This is a transparent planning heuristic using supplied VoI estimates, not a learned VoI model.** Forecast quality is an explicit unsolved research and evaluation problem. Preflight spending reservations cannot enforce provider billing limits.
+
+## Full collaborative decision workflow
+
+The SDK can orchestrate real agents with `propose()` and `discuss()` methods (see [`arbiter_plugin/brainstorm_agents.py`](arbiter_plugin/brainstorm_agents.py)). Or it can process a transcript generated by any external host without calling an LLM.
 
 ```python
 import asyncio
-from arbiter_plugin import (
-    BrainstormRequest,
-    Contribution,
-    IdeaDraft,
-    Position,
-    ScriptedBrainstormAgent,
-    run_brainstorm,
-)
+from examples.collaborative_demo import create_demo
+from pluralforge import NextActionEstimate, run_brainstorm
 
-agent_a = ScriptedBrainstormAgent(
-    agent_id="speed",
-    independent=Contribution(
-        agent_id="speed",
-        new_ideas=[IdeaDraft(
-            id="fast", title="Fast release", description="Ship a small pilot",
-            expected_utility=80, execution_cost=15, risk_loss=10,
-            feasible=True,
-        )],
-        position=Position(support_ids=["fast"]),
-    ),
-)
-
-agent_b = ScriptedBrainstormAgent(
-    agent_id="quality",
-    independent=Contribution(
-        agent_id="quality",
-        new_ideas=[IdeaDraft(
-            id="careful", title="Careful release", description="Validate before launch",
-            expected_utility=90, execution_cost=30, risk_loss=8,
-            feasible=True,
-        )],
-        position=Position(support_ids=["careful"]),
-    ),
-)
-
-request = BrainstormRequest(
-    session_id="release-plan",
-    objective="Choose a software delivery approach",
-    max_discussion_rounds=0,
-)
-
-result = asyncio.run(run_brainstorm(request, [agent_a, agent_b]))
-print(result.selected_idea_id)
-print(result.dissents)
-print(result.model_dump_json(indent=2))
+req, agents = create_demo()  # scripted fixture; no live LLM
+forecast = {
+    1: [NextActionEstimate(action="consult_agent", agent_id="creative",
+         expected_decision_gain=9, execution_cost_utility=2,
+         estimated_api_cost_usd=0.02, rationale="Host forecast")],
+    2: [NextActionEstimate(action="consult_agent", agent_id="quality",
+         expected_decision_gain=5, execution_cost_utility=1,
+         estimated_api_cost_usd=0.02, rationale="Host forecast")],
+    3: [NextActionEstimate(action="discuss_all",
+         expected_decision_gain=1, execution_cost_utility=3,
+         estimated_api_cost_usd=0.06, rationale="Marginal gain too small")],
+}
+result = asyncio.run(run_brainstorm(req, agents, adaptive_forecasts=forecast))
+print(result.provisional_leader_id, result.status, result.stop_reason)
+print([(d.idea_id, d.supporters, d.opponents) for d in result.dissents])
 ```
 
-For the **full multiple-round demonstration that generates a third idea**, run [`examples/collaborative_demo.py`](examples/collaborative_demo.py).
+The orchestrator first gathers **independent** proposals. In later rounds it follows the recommended action and preserves all contributions and route decisions. New ideas have `parent_ids`. Unknown utility/cost/risk/feasibility fields lead to `needs_estimates`, never invented values. Risk warnings trigger review. Nothing automatically performs a consequential action.
 
-## Scoring and decision boundaries
+### Optional retrieval action
 
-For proposals with complete, comparable inputs:
+When a `retrieve` action has the best forecast, provide an async `research_fn(view)` returning a `ResearchObservation(source_ref=..., summary=..., evidence_status="unverified")`. The observation becomes part of the auditable shared view in later rounds. External sources do **not** become verified facts merely by retrieval. See `tests/test_adaptive.py` for an executable example.
+
+## Benchmarks and scientific claims
+
+```powershell
+python -m benchmarks.compare_policies
+# results saved in benchmarks/offline_comparison.json
+```
+
+The cross-domain fixture runner compares **single agent**, **plurality vote**, **fixed discussion** and **adaptive** under the **same maximum API budget per case** (not necessarily identical actual expenditure). It reports candidate count, assumed realized utility, regret, and reported API cost. The 5 cases use *hand-authored simulated agents and outcomes*. They test the evaluation plumbing and show how to record counterfactual policies; they **cannot demonstrate true superiority** of this architecture over any LLM or baseline.
+
+See [`docs/BENCHMARK_PROTOCOL.md`](docs/BENCHMARK_PROTOCOL.md) for the proposed real-world evaluation: human/external ground truth, held-out tasks, matched budget caps and optionally matched spend, blinded judging, calibration, latency, safety, repeated runs, confidence intervals and an ablation on the routing/brainstorming stages.
+
+## Integrations
+
+**Python SDK:** import from `pluralforge` (preferred), or `arbiter_plugin` (backwards compatible).
+
+**Local HTTP API:**
+
+```powershell
+python -m pip install -e ".[api]"
+python -m uvicorn arbiter_plugin.api:app --host 127.0.0.1 --port 8000
+```
+
+`POST /v1/next-step` accepts forecasts, budget and reservations, returning the selected next step and alternative rankings. `POST /v1/brainstorm` consolidates host-provided discussion traces only; it does not spawn any model. Other existing endpoints cover deterministic scoring and research planning. `GET /docs` shows the OpenAPI docs.
+
+**MCP (optional):**
+
+```powershell
+python -m pip install -e ".[mcp]"
+python -m arbiter_plugin.mcp_server
+```
+
+The adapter includes `pluralforge_plan_next_step` and legacy `arbiter_brainstorm`, `arbiter_evaluate`, `arbiter_plan_research`, `arbiter_record_verified_outcome` tools. SDK compatibility is environment-dependent; **no live host handshake is claimed**.
+
+**Paid multi-model brainstorming (optional):**
+
+```powershell
+python -m pip install -e ".[llm]"
+# Set provider-specific API keys using your own local environment
+python -m examples.live_brainstorm
+```
+
+The LiteLLM adapter is opt-in and has not been verified against live providers in this package. Never commit real API secrets, local `.env` files, or private research data. The example HTTP server has **no authentication**—do not expose it to the public Internet without authentication, TLS, rate limits, isolation, and authorization.
+
+## Project layout
 
 ```text
-net_utility = expected_utility - execution_cost - risk_aversion * risk_loss
+pluralforge-ai-v0.4/
+├── pluralforge/               # Preferred public Python imports
+├── arbiter_plugin/            # Backward-compatible engine
+│   ├── adaptive.py            # NEW: estimated net-value router
+│   ├── collaboration.py       # New proposals, dissent, orchestration and scoring
+│   ├── novelty.py             # NEW: non-destructive duplicate wording flags
+│   ├── brainstorm_agents.py   # Scripted agents and optional LiteLLM adapter
+│   ├── core.py, models.py     # Deterministic decision evaluation contracts
+│   ├── information.py        # Explicit research-value calculator
+│   ├── feedback.py           # SQLite verified outcomes
+│   ├── api.py, mcp_server.py  # Optional host interfaces
+│   └── benchmark.py          # Core regression scoring
+├── examples/                  # Offline + optional real-API demos
+├── benchmarks/                # Synthetic baseline comparisons + JSON results
+├── tests/                     # Automatic unit/regression tests
+├── docs/                      # Architecture, benchmark protocol, static demo
+├── .github/workflows/tests.yml
+├── pyproject.toml
+└── LICENSE
 ```
 
-All terms must share a consistent **utility unit**. An agent's numbers are estimates, **not verified facts**. If a proposal lacks utility, cost, risk, or feasibility estimates, Arbiter leaves it unscored and blocks an unconditional final selection.
+## Non-goals and limitations
 
-A review may also be required for risk warnings, policy settings, or API-budget overrun. **Arbiter proposes; it does not execute external actions.**
-
-A further brainstorming round can be skipped if the *externally estimated* decision improvement does not exceed the *externally estimated* deliberation cost. This is not an automatically learned or scientifically calibrated value-of-information model.
-
-## Optional integrations
-
-| Integration | Install | Entry point |
-|---|---|---|
-| Real LLM agents (LiteLLM) | `pip install -e ".[llm]"` | `python -m examples.live_brainstorm` |
-| Local HTTP API | `pip install -e ".[api]"` | `uvicorn arbiter_plugin.api:app --host 127.0.0.1 --port 8000` |
-| MCP tools | `pip install -e ".[mcp]"` | `python -m arbiter_plugin.mcp_server` |
-
-The HTTP interface includes `/v1/brainstorm`, `/v1/evaluate`, and `/v1/research`. The brainstorming endpoint **consolidates host-submitted transcripts**; it does not itself run the models. MCP exposes `arbiter_brainstorm`, `arbiter_evaluate`, `arbiter_plan_research`, and `arbiter_record_verified_outcome`.
-
-The localhost HTTP example **has no authentication**; do not expose it publicly. MCP host compatibility and live paid-provider calls have **not** been independently verified end-to-end for this release. API spending limits are estimates, not hard limits enforced by providers.
-
-## Evaluation: what is and isn't proven
-
-The repository includes deterministic Python tests and five synthetic collaboration checks. They verify code paths and contracts. **They do not prove that multi-agent deliberation outperforms a single LLM in real decisions.**
-
-To evaluate that hypothesis, future experiments should compare single-agent, simple voting, and collaborative approaches on held-out tasks with the **same budget**, human-verified ground truth, real costs, solution novelty, calibration, and failure/review rates.
-
-## Project structure
-
-```text
-arbiter_plugin/    # Core contracts, scoring, collaboration, feedback, adapters
-examples/          # Offline and optional live demos
-benchmarks/        # Synthetic benchmark runner and sample tasks
-tests/             # Automated unit tests
-docs/              # Interactive browser demo and architecture notes
-.github/workflows/ # GitHub Actions test workflow
-pyproject.toml
-LICENSE
-```
-
-More architectural detail: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+- **No forced consensus, no all-powerful meta-judge, no automatic execution.** Agent agreement is not equivalent to truth.
+- **Not an autonomously calibrated VoI estimator:** next-step forecasts are provided by the host. Future research should evaluate/learn these forecasts using held-out measured outcomes.
+- **No verified semantic novelty model:** similarity hints are surface-text comparisons only; candidates are never silently merged.
+- **Not production security or a hosted commercial plugin.** MCP and HTTP hosting need additional authentication and operational controls.
+- **Not a validated real-world benchmark of AI intelligence.** The automated tests and offline fixture results demonstrate software behavior, not model quality.
 
 ## Roadmap
 
-- [x] Independent proposals, collaborative rounds, new candidate ideas
-- [x] Persistent dissent and transparent decision scoring
-- [x] Python SDK, offline web demo, optional MCP/HTTP adapters
-- [ ] Semantic idea deduplication and evidence provenance checks
-- [ ] Real-model cross-provider evaluation and calibrated uncertainty
-- [ ] Robust public deployment, authentication and operational observability
-- [ ] Empirical, cross-domain value-of-information estimation
+- [x] Independent initial proposals, new idea lineage, dissent-preserving traces
+- [x] Transparent utility/risk/cost scoring with unknown-value gates
+- [x] Explicit next-step routing between one agent, all agents, retrieval, and stop
+- [x] Local HTTP route API and optional MCP entry point
+- [x] Synthetic cross-domain policy comparison and novelty warnings
+- [ ] Independently labeled real-task benchmarks with cost controls and repeated runs
+- [ ] Calibrated information-value forecasts with out-of-sample testing
+- [ ] Pluggable semantic equivalence and evidence-checking evaluators
+- [ ] Provider-specific hard spend caps, robust rate limiting, authentication, and audited deployments
 
-## Project status and limitations
-
-**v0.3 is a research MVP, not a production decision authority.** Agents can share errors or invent evidence; proposal novelty is tracked by **IDs**, not semantic equivalence; cost/utility estimates are only as good as their sources; the library does not grant permission to perform external actions. High-impact use requires independent verification, host-side safeguards and human authorization.
-
-**License:** [MIT](LICENSE)
+**License:** MIT. See [LICENSE](LICENSE). Contributions are welcome with reproducible tests, clear failure cases and explicit source boundaries.

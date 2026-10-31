@@ -3,13 +3,13 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "arbiter-ai-collaborative"
-version = "0.3.0"
-description = "Domain-neutral multi-agent brainstorming with new ideas, persistent dissent and auditable decision scoring"
+name = "pluralforge-ai"
+version = "0.4.0"
+description = "Cost-aware collective intelligence and auditable multi-agent decision optimization"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
-authors = [{name = "Arbiter AI contributors"}]
+authors = [{name = "PluralForge AI contributors"}]
 dependencies = ["pydantic>=2.4,<3"]
 
 [project.optional-dependencies]
@@ -20,10 +20,11 @@ dev = ["pytest>=8", "fastapi>=0.110", "httpx>=0.24"]
 all = ["litellm>=1,<2", "mcp>=2,<3", "fastapi>=0.110", "uvicorn>=0.30", "pytest>=8", "httpx>=0.24"]
 
 [project.scripts]
+pluralforge-mcp = "arbiter_plugin.mcp_server:main"
 arbiter-mcp = "arbiter_plugin.mcp_server:main"
 
 [tool.setuptools.packages.find]
-include = ["arbiter_plugin*"]
+include = ["arbiter_plugin*", "pluralforge*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
