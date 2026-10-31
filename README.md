@@ -1,19 +1,84 @@
 # PluralForge AI
 
 **Many minds. New ideas. Better decisions.**  
-**Cost-aware collective intelligence & decision optimization.**
+**Cost-Aware Collective Intelligence & Decision Optimization**  
+**成本感知的集体智能与决策优化**
 
-![Offline interactive demo](docs/preview.png)
+![PluralForge AI offline interactive demo](docs/preview.png)
 
-> **PluralForge** is an open-source, domain-neutral Python decision layer for multi-agent systems. Agents may independently propose ideas, challenge each other, synthesize **new options**, and **keep disagreeing**. An auditable utility scorer and a budget-aware next-step router decide what the *software recommends*, not an all-powerful meta-judge. It **never executes real-world actions**.
+> **PluralForge AI** is an open-source, domain-neutral decision layer for multi-agent systems. Agents think independently, challenge each other, **create new candidate solutions**, and **preserve dissent**. A transparent scoring engine and a cost-aware router help the host decide whether to consult another agent, discuss further, retrieve evidence, or stop. No all-powerful meta-judge. No automatic execution of real-world actions.
+>
+> **中文简介：** PluralForge AI 是通用、可插拔的多智能体协作决策框架。多个 Agent 先独立思考，再交叉质疑、组合创新方案、保留不同意见；系统根据预期信息价值、预算、风险和效用决定继续咨询、讨论、检索还是停止。它不是多数投票工具，也不由单个元裁判拍板。
 
-**中文简介：** 通用多 Agent 协作决策插件：独立思考 → 交叉质疑 → 产生新方案 → 保留分歧 → 动态选择下一次讨论、检索或停止 → 可解释评分 → 独立验证。目标不是让 AI 达成共识，而是在预算、风险、不确定性约束下提升决策质量。
+**Release / 版本：** v0.5 research MVP · Python 3.11+ · MIT · offline-first  
+**Interfaces / 接口：** Python SDK · optional local REST API · optional MCP · optional LiteLLM  
+**Compatibility / 兼容性：** import from `pluralforge` (preferred); `arbiter_plugin` is retained for older applications.
 
-**Status:** v0.5 research MVP · Python 3.11+ · MIT · offline-first. Optional integrations: LiteLLM, local REST API, MCP. The public `pluralforge` import path is new; `arbiter_plugin` imports are retained for compatibility.
+**Quick links / 快速导航：** [Workflow / 业务流程](#workflow--业务流程) · [Architecture / 技术架构](#architecture--技术架构) · [Installation](#installation) · [Information Value Learning](#information-value-learning-engine--new-v05) · [Benchmarks](#benchmarks-and-scientific-claims) · [中文快速开始](#中文快速开始)
 
 ## Why this exists
 
 More model calls and longer debates do **not** necessarily produce better answers. PluralForge treats deliberation as an **investment decision**: compare the *expected improvement* of each available next step against its cost, while respecting the remaining API budget. It does **not** force consensus or presume the extra calls will help.
+
+## Workflow / 业务流程
+
+The process optimizes **decision quality per unit of cost**, not agreement among agents. **A new idea can be generated mid-discussion, and opposing agents may remain opposed at the end.**  
+**业务逻辑：** 用户定义任务与约束 → 各 Agent 独立提出方案 → 多轮质疑、生成新方案并保留分歧 → 根据预期信息收益和预算选择下一步 → 完整性与风险检查 → 独立评分 → 输出建议和可审核轨迹 → 在有外部核验结果后学习。
+
+```mermaid
+flowchart TD
+    A["Host task: objective, constraints, budget"] --> B["Round 0: independent agent proposals"]
+    B --> C["Shared ideas, critiques and dissent"]
+    C --> D{"Next step: positive net value and within budget?"}
+    P["Explicit host forecasts"] -.-> D
+    L["Historical information-value learner"] -.-> D
+    D -->|Consult one agent| E["Targeted critique or new idea"]
+    D -->|Discuss all| F["Brainstorm: challenge, combine, generate"]
+    D -->|Retrieve| G["External evidence retrieval"]
+    D -->|Stop| H["Validate estimates, feasibility and risk"]
+    E --> C
+    F --> C
+    G --> C
+    H --> I["Deterministic utility-cost-risk scoring"]
+    I --> J["Return suggestions, unresolved dissent and audit trail"]
+    J -.-> K["Later: host independently verifies outcome"]
+    K --> M["SQLite feedback record"]
+    M -.-> L
+```
+
+**Decision boundaries / 决策边界：**
+
+- **No forced consensus / 不强制共识：** opposition and minority positions are retained as structured data.
+- **No judge override / 不让元裁判拍板：** LLM critiques are inputs, not an authorization or final verdict.
+- **Incomplete estimates / 估值缺失：** options missing comparable utility, cost, risk or feasibility remain unscored; the system may return `needs_estimates`.
+- **Risk and review / 风险与人工审核：** warnings or review policies may return `needs_review`; the system never directly performs consequential actions.
+- **No invented VoI / 不编造信息价值：** without adequate verified history or explicit host forecasts, the learner abstains and the router can stop.
+
+## Architecture / 技术架构
+
+The core engine does not depend on any specific model provider or business domain. The app or host supplies task-specific scoring rules, agent adapters and independently verified outcomes.  
+**核心是通用插件：** Agent、行业数据和评分标准由外部应用提供；插件负责协作记录、下一步路由、确定性评分和基于核验反馈的经验估计。
+
+```mermaid
+flowchart LR
+    HOST["External host / application"] --> API["Python SDK / optional HTTP / MCP"]
+    API --> COL["Collective intelligence engine"]
+    COL --> POOL["Idea lineage, critiques and dissent"]
+    COL --> ROUTE["Adaptive next-step router"]
+    ROUTE --> ADAPT["Agent and retrieval adapters"]
+    ADAPT -->|New contributions| COL
+    ROUTE --> SCORE["Decision optimization engine"]
+    POOL --> SCORE
+    SCORE --> RESULT["Proposals, rankings and audit trace"]
+    RESULT --> HOST
+    HOST -->|Verified outcome, if available| DB[(SQLite feedback)]
+    DB --> LEARN["Information Value Learning Engine"]
+    LEARN -.->|Conservative empirical forecasts| ROUTE
+```
+
+**Math in one line / 核心公式：** `net_utility = expected_utility - execution_cost - risk_aversion * risk_loss`. All three quantities must use a comparable **utility unit**. API usage cost is tracked in **USD separately**, as a spending constraint; the engine does not subtract USD from utility points.
+
+**Implementation map / 代码位置：** `arbiter_plugin/collaboration.py` handles proposals, dissent and scoring; `adaptive.py` routes the next step; `value_learning.py` learns from verified history; `feedback.py` saves outcomes; `api.py` and `mcp_server.py` expose optional integration points. `pluralforge/` provides the preferred import path.
 
 ### What is in v0.5
 
@@ -213,6 +278,28 @@ pluralforge-ai-v0.5/
 ├── pyproject.toml
 └── LICENSE
 ```
+
+## 中文快速开始
+
+这是 **PluralForge AI v0.5** 的研究原型，不是已完成实际模型效果验证的商业产品。它适合开发者在自己的 AI Agent 系统中加入「集体探索 + 评分决策 + 信息价值学习」能力。
+
+**运行方式：** Windows 11 / VS Code 终端，在仓库根目录运行：
+
+```powershell
+py -3.12 -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install -e ".[dev]"
+python -m examples.collaborative_demo
+python -m examples.value_learning_demo
+python -m benchmarks.learning_temporal_replay
+python -m pytest
+```
+
+打开 [`docs/index.html`](docs/index.html) 可以体验**离线交互演示**，不需要 API Key。网页中的数据为模拟场景，不是真实 LLM 实验成绩。
+
+**v0.5 新增的信息价值学习引擎**：使用由外部宿主明确核验的历史决策质量变化和 API 成本，为咨询特定 Agent、集体继续讨论或检索证据提供保守估计；数据少时不作预测。历史观测只能说明相关性，**不能证明多 Agent 或路由策略存在因果收益**。
+
+**重要提示：** 不要在仓库中提交 `.env`、API Key 或私人数据；示例 HTTP 服务没有生产级鉴权，不要直接开放到公网。外部检索内容需要独立核验；系统推荐不等于获得行动授权。
 
 ## Non-goals and limitations
 
