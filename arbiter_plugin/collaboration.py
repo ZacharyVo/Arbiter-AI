@@ -6,12 +6,14 @@ verified evidence or automatic authorization to execute actions.
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime, timezone
 from collections.abc import Sequence
 from typing import Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from .adaptive import NextActionEstimate, RouteDecision, select_next_action
 from .novelty import NoveltyFlag, surface_duplicate_flags
+from .value_learning import InformationValueLearner, LearningContext, ActionCandidate, LearningRequest
 
 
 class Strict(BaseModel):
@@ -342,11 +344,17 @@ async def run_brainstorm(
     req: BrainstormRequest, agents: Sequence[BrainstormAgent], *,
     adaptive_forecasts: dict[int, list[NextActionEstimate]] | None = None,
     research_fn=None,
+    value_learner: InformationValueLearner | None = None,
+    learning_tags: dict[str, str] | None = None,
+    learning_as_of: datetime | None = None,
+    learning_min_weighted_support: float = 3.0,
 ) -> BrainstormResult:
     """Async independent generation -> collaborative discussion -> deterministic score.
 
     Errors are visible in round traces. Continuing is budget/VOI gated, but all
-    VOI estimates must be supplied by the host. Never silently assumes VOI from entropy.
+    For learned routing, outcomes must have been explicitly verified and available
+    before `learning_as_of`. Sparse history stops rather than fabricates a forecast.
+    Host-supplied adaptive_forecasts override learned routing when both provided.
     """
     if len(agents) < 2:
         raise ValueError('Collaborative mode needs at least two agents')
@@ -358,6 +366,8 @@ async def run_brainstorm(
         if reserved < 0:
             raise ValueError('Agent cost reservation must be nonnegative')
 
+    # Freeze forecast time for the entire session, avoiding within-run lookahead.
+    forecast_as_of = learning_as_of or datetime.now(timezone.utc)
     traces: list[RoundTrace] = []
     stopped = 'max_rounds'
     no_new = 0
@@ -430,8 +440,21 @@ async def run_brainstorm(
         stopped = 'budget_exceeded'
     else:
         for number in range(1, req.max_discussion_rounds + 1):
-            if adaptive_forecasts is not None:
-                route = select_next_action(adaptive_forecasts.get(number, []),
+            if adaptive_forecasts is not None or value_learner is not None:
+                if adaptive_forecasts is not None:
+                    forecasts = adaptive_forecasts.get(number, [])
+                else:
+                    candidates = [ActionCandidate(action='discuss_all')]
+                    candidates.extend(ActionCandidate(action='consult_agent',agent_id=a.agent_id) for a in agents)
+                    if research_fn is not None:
+                        candidates.append(ActionCandidate(action='retrieve'))
+                    learned = value_learner.forecast(LearningRequest(
+                        context=LearningContext(domain=req.domain, utility_unit=req.utility_unit,
+                                                tags=learning_tags or {}),
+                        candidates=candidates, as_of=forecast_as_of,
+                        min_weighted_support=learning_min_weighted_support))
+                    forecasts = learned.usable_estimates
+                route = select_next_action(forecasts,
                     remaining_api_budget_usd=max(0, req.max_api_budget_usd - spent()),
                     reservations_usd={a.agent_id: a.reserved_api_cost_usd for a in agents},
                     retriever_available=research_fn is not None)

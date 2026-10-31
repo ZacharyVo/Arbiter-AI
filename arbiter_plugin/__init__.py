@@ -1,4 +1,4 @@
-"""PluralForge AI v0.4: cost-aware collective intelligence and decision optimization."""
+"""PluralForge AI v0.5: cost-aware collective intelligence and decision optimization."""
 from .models import (Option, Opinion, DecisionRequest, DecisionResult, ResearchOption,
                      ResearchRequest, ResearchRecommendation, VerifiedOutcome, OutcomeReceipt)
 from .core import evaluate_decision, disagreement_entropy
@@ -12,7 +12,10 @@ from .brainstorm_agents import ScriptedBrainstormAgent, LiteLLMBrainstormAgent
 from .adaptive import NextActionEstimate, ActionRank, RouteDecision, select_next_action
 from .collaboration import ResearchObservation
 from .novelty import NoveltyFlag, surface_duplicate_flags
-__version__ = '0.4.0'
+from .value_learning import (LearningContext, ActionCandidate, VerifiedValueObservation,
+                             LearningRequest, ActionForecast, LearningReport, LearningRoute,
+                             InformationValueLearner)
+__version__ = '0.5.0'
 __all__ = ['Option', 'Opinion', 'DecisionRequest', 'DecisionResult', 'ResearchOption',
            'ResearchRequest', 'ResearchRecommendation', 'VerifiedOutcome', 'OutcomeReceipt',
            'evaluate_decision', 'disagreement_entropy', 'plan_information', 'FeedbackStore',
@@ -20,4 +23,7 @@ __all__ = ['Option', 'Opinion', 'DecisionRequest', 'DecisionResult', 'ResearchOp
            'InformationEstimate', 'BrainstormRequest', 'DiscussionView', 'RoundTrace',
            'IdeaScore', 'Dissent', 'BrainstormResult', 'consolidate_brainstorm',
            'run_brainstorm', 'ResearchObservation', 'NextActionEstimate', 'ActionRank',
-           'RouteDecision', 'select_next_action', 'NoveltyFlag', 'surface_duplicate_flags', 'ScriptedBrainstormAgent', 'LiteLLMBrainstormAgent']
+           'RouteDecision', 'select_next_action', 'NoveltyFlag', 'surface_duplicate_flags', 'ScriptedBrainstormAgent', 'LiteLLMBrainstormAgent',
+           'LearningContext', 'ActionCandidate', 'VerifiedValueObservation',
+           'LearningRequest', 'ActionForecast', 'LearningReport', 'LearningRoute',
+           'InformationValueLearner']

@@ -1,4 +1,4 @@
-# GitHub repository presentation — PluralForge AI v0.4
+# GitHub repository presentation — PluralForge AI v0.5
 
 **Repository name:** `pluralforge-ai`
 
@@ -8,7 +8,7 @@
 **Topics:**
 `multi-agent` `ai-agents` `collective-intelligence` `brainstorming` `decision-optimization` `llm` `mcp` `value-of-information` `python` `benchmarking`
 
-**Tag suggestion:** `v0.4.0` — Research MVP, not production software.
+**Tag suggestion:** `v0.5.0` — Research MVP, not production software.
 
 ## Migration from Arbiter AI Collaborative v0.3
 

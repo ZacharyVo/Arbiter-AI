@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.0 — Information Value Learning Engine
+
+- Added `arbiter_plugin.value_learning`: host-attested evidence logging in local SQLite, idempotent writes, strict as-of data availability checks and context/domain/unit isolation.
+- Added regularized, uncertainty-penalized historical marginal-gain forecasts for `consult_agent`, `discuss_all`, and `retrieve`, plus cold-start abstention and optional explicit host priors.
+- Integrated learned next-step forecasts into `run_brainstorm`, preserving explicit host forecast overrides and budget caps.
+- Added local HTTP and optional MCP interfaces to record verified feedback and request evidence-aware forecasts or routes.
+- Added synthetic offline demo, chronological logged-action replay, new regression tests and methodology documentation.
+- Core deliberately remains observational: no causal claims, no automatic self-certification, no provider API spending guarantees.
+
 ## 0.4.0 — PluralForge AI (research MVP)
 
 - Renamed distribution and public positioning to **PluralForge AI**, retaining `arbiter_plugin` for backwards imports and adding `pluralforge` alias.

@@ -1,4 +1,4 @@
-# PluralForge AI — v0.4 Architecture
+# PluralForge AI — v0.5 Architecture
 
 ## What this layer does
 
@@ -59,6 +59,10 @@ The scorer never silently fills blanks. Risk-warning critiques and explicit revi
 
 - External utility estimates may be inconsistent, biased or false; scoring is conditional on their inputs.
 - Budget reservations are preflight estimates, not provider-side limits. A provider can still bill more than expected.
-- No trained controller, external truth verifier, automatic agent reputation update during deliberation, or genuine semantic deduplication is included in v0.4.
+- v0.5 adds an **observational historical next-action estimator** (`value_learning.py`). It needs externally verified, time-available outcome scores and remains non-causal. No trained reinforcement-learning controller, external automatic truth verifier, or genuine semantic deduplication is included.
 - Only use local HTTP mode for development. Before public hosting, implement authorization, authentication, transport security, quotas, privacy controls and data retention policy.
 - MCP and LiteLLM are optional, not verified live-host integrations in this release.
+
+## Information Value Learning Engine (v0.5)
+
+Historical host-attested action records → `InformationValueLearner.forecast()` → per-action conservative estimated gain, execution cost and API cost → existing `select_next_action()` → only a recommended next step. `run_brainstorm(value_learner=...)` uses it for subsequent rounds when data supports the estimate. Uncertain/sparse predictions are omitted, not fabricated. See [INFORMATION_VALUE_LEARNING.md](INFORMATION_VALUE_LEARNING.md).

@@ -8,7 +8,7 @@
 @media(max-width:700px){.planner-grid,.route-results{grid-template-columns:1fr}}
 </style></head>
 <body><main class="shell">
-<header class="top"><div class="logo"><div class="mark">P</div>PluralForge <span style="color:var(--teal)">AI</span><span style="font-size:12px;color:var(--muted);font-weight:500;margin-left:6px">v0.4</span></div><span class="tag">开源研究原型 · 浏览器离线演示</span></header>
+<header class="top"><div class="logo"><div class="mark">P</div>PluralForge <span style="color:var(--teal)">AI</span><span style="font-size:12px;color:var(--muted);font-weight:500;margin-left:6px">v0.5</span></div><span class="tag">开源研究原型 · 浏览器离线演示</span></header>
 <section class="hero"><div><div class="eyebrow">COLLECTIVE INTELLIGENCE ENGINE</div><h1>不强制共识，让多个 AI<br>一起创造更好的方案。</h1><p>独立思考、交叉质疑、创造新方案并保留分歧。根据预计信息增益、执行成本和 API 预算决定下一次讨论、检索还是停止；不是“元裁判”拍板。</p></div><div class="small">这是固定的脚本化示例，不会调用真实 LLM；正式系统可通过 Python SDK 或可选 LiteLLM 接口连接实际模型。</div></section>
 <section class="dashboard"><div class="panel"><div class="panel-head"><div><h2>协作讨论轨迹</h2><div class="sub">案例：如何为软件产品选择上线策略？</div></div><span class="round-pill" id="roundBadge">第 0 轮 · 独立思考</span></div>
 <div class="stages" id="stages"><button class="stage active" data-stage="0"><span>ROUND 0</span><b>独立提案</b></button><button class="stage" data-stage="1"><span>ROUND 1</span><b>交叉质疑与新方案</b></button><button class="stage" data-stage="2"><span>ROUND 2</span><b>重新表态与保留分歧</b></button></div>
@@ -27,6 +27,14 @@
  <div id="routeResults" class="route-results" aria-live="polite"></div>
  <div id="routeVerdict" class="banner" aria-live="polite"></div>
  <div class="mutednote">候选：咨询单个 Agent（增益 8、成本 2、预留 $0.02）；全体讨论（增益 10、成本 7、预留 $0.06）；检索（增益可调、成本 3、预留 $0.04）。停止始终可选，净信息价值 ≤ 0 则不继续。以上均为模拟假设。</div>
+</section>
+<section class="panel planner" aria-label="历史信息价值学习引擎示意">
+ <div class="panel-head"><div><h2>信息价值学习 · Information Value Learning <span class="newflag">NEW v0.5</span></h2><div class="sub">历史结果 → 保守估计 → 根据预期净价值选择下一步；不能证明因果改善</div></div><span class="tag">纯浏览器合成数据 · 不连接数据库</span></div>
+ <div class="planner-grid">
+  <div class="sliderbox"><div class="sliderrow"><span>已独立核验的历史咨询案例数</span><strong id="learnedSamplesLabel">0 条</strong></div><input id="learnedSamples" type="range" min="0" max="10" value="0" step="1" aria-label="合成核验案例条数"><div class="mutednote">少于 3 条样本时拒绝预测，不将模型自评置信度当作事实。</div></div>
+  <div class="sliderbox"><div class="sliderrow"><span>额外咨询的效用成本</span><strong id="learnedCostLabel">2 点</strong></div><input id="learnedCost" type="range" min="0" max="12" value="2" step="1" aria-label="咨询效用成本"><div class="mutednote">API 费用另按美元预算检查，不直接与效用点数相减。</div></div>
+ </div><div id="learnedResult" class="banner" aria-live="polite"></div>
+ <div class="mutednote">演示使用事先写定的合成增益序列，模拟 v0.5 的零基线收缩和不确定性惩罚。正式 Python 版本只使用对应时间点之前可获得的、外部核验过的历史评分；仍可能存在样本选择偏差。</div>
 </section>
 <footer class="footer"><span>PluralForge AI · Deliberation is an investment decision</span><span>Python SDK · MCP · Local REST API · MIT License</span></footer></main>
 <script>
@@ -51,4 +59,18 @@ function renderRoute(){let budget=Number($('apiBudget').value)/100;
 }
 $('apiBudget').addEventListener('input',renderRoute);
 $('retrievalGain').addEventListener('input',renderRoute);renderRoute();
+const fakeGains=[12,9,11,13,8,10,11,12,9,14];
+function renderLearning(){
+ const n=Number($('learnedSamples').value), c=Number($('learnedCost').value);
+ $('learnedSamplesLabel').textContent=n+' 条';$('learnedCostLabel').textContent=c+' 点';
+ const box=$('learnedResult');
+ if(n<3){box.className='banner warn';box.innerHTML='<strong>数据不足：停止新增调用</strong>历史核验案例不足 3 条。学习引擎不会编造预期增益；可由宿主显式提供先验估计。';return;}
+ const vals=fakeGains.slice(0,n);const avg=vals.reduce((a,b)=>a+b,0)/n;
+ const mean=vals.reduce((a,b)=>a+b,0)/(n+2);const variance=vals.reduce((a,b)=>a+(b-avg)*(b-avg),0)/n;
+ const stderr=Math.sqrt(variance/n);const conservative=Math.max(0,mean-stderr);
+ const net=conservative-c;box.className=net>0?'banner':'banner warn';
+ box.innerHTML=`<strong>${net>0?'预测净价值为正：可以考虑再咨询':'预测净价值不足：建议停止'}</strong> 合成历史推算保守增益 ${conservative.toFixed(2)} 点，成本 ${c} 点，净价值 ${net.toFixed(2)} 点。假设 API 预算充足；这不是实际成功率。`;
+}
+$('learnedSamples').addEventListener('input',renderLearning);
+$('learnedCost').addEventListener('input',renderLearning);renderLearning();
 </script></body></html>

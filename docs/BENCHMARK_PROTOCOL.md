@@ -42,3 +42,11 @@ python -m pytest
 ```
 
 The included synthetic five-scenario example is deliberately small and hand-designed to exercise the path `novel idea -> better scored option -> cheaper targeted continuation`. It is **not randomly sampled** and may favor the implementation by construction. Real evidence requires the controls above.
+
+## v0.5: evaluating the Information Value Learning Engine
+
+The new `benchmarks.learning_temporal_replay` is **synthetic and observational**. It evaluates the forecast of realized score improvement on *logged actions only*. All forecasts are made at timestamp `t`, only from evidence with `available_at < t`; the outcome for timestamp `t` is recorded afterward.
+
+Report **coverage** (fraction of held-out observed actions for which there is enough history), **MAE of the expected observed gain**, API spend, and rate of budget/risk violations. Do not report the observed-action forecast MAE as a causal policy-value gain. An unbiased comparison of action-selection policies needs a prospective randomized or appropriately logged-propensity design and independent scoring. Repeated samples from the same topic/agent are not automatically independent.
+
+The current synthetic fixture is intentionally small and must not be used to claim generalization across domains, actual LLM performance, or statistically significant improvement.

@@ -8,3 +8,9 @@ dist/
 .env
 *.sqlite
 *.db
+
+.DS_Store
+*.whl
+*.log
+*.db-wal
+*.db-shm
