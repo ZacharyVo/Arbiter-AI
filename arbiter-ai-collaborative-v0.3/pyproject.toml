@@ -3,9 +3,9 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "arbiter-ai-universal"
-version = "0.2.0"
-description = "Provider- and domain-neutral AI decision scoring, arbitration and research-value plugin"
+name = "arbiter-ai-collaborative"
+version = "0.3.0"
+description = "Domain-neutral multi-agent brainstorming with new ideas, persistent dissent and auditable decision scoring"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
@@ -16,8 +16,8 @@ dependencies = ["pydantic>=2.4,<3"]
 llm = ["litellm>=1,<2"]
 mcp = ["mcp>=2,<3"]
 api = ["fastapi>=0.110", "uvicorn>=0.30"]
-dev = ["pytest>=8", "fastapi>=0.110"]
-all = ["litellm>=1,<2", "mcp>=2,<3", "fastapi>=0.110", "uvicorn>=0.30", "pytest>=8"]
+dev = ["pytest>=8", "fastapi>=0.110", "httpx>=0.24"]
+all = ["litellm>=1,<2", "mcp>=2,<3", "fastapi>=0.110", "uvicorn>=0.30", "pytest>=8", "httpx>=0.24"]
 
 [project.scripts]
 arbiter-mcp = "arbiter_plugin.mcp_server:main"

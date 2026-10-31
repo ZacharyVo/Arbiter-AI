@@ -1,4 +1,4 @@
-name: Python tests
+name: Core and collaboration tests
 on:
   push:
   pull_request:
@@ -15,4 +15,5 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: python -m pip install -e '.[dev]'
       - run: python -m pytest
-      - run: python -m examples.three_domains
+      - run: python -m examples.collaborative_demo
+      - run: python -m benchmarks.run_collaboration_benchmark

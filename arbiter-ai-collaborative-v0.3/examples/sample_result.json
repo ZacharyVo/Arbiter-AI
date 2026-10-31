@@ -1,0 +1,428 @@
+{
+  "session_id": "release-workflow",
+  "stop_reason": "information_not_worth_cost",
+  "status": "needs_review",
+  "selected_idea_id": "hybrid",
+  "provisional_leader_id": "hybrid",
+  "ideas": [
+    {
+      "id": "fast",
+      "title": "Ship an MVP",
+      "description": "Short pilot with explicit scope",
+      "parent_ids": [],
+      "evidence": [],
+      "open_questions": [
+        "Is the MVP support burden acceptable?"
+      ],
+      "expected_utility": 82.0,
+      "execution_cost": 12.0,
+      "risk_loss": 12.0,
+      "feasible": true,
+      "values_source": "agent_estimate",
+      "created_by": "speed",
+      "created_in_round": 0
+    },
+    {
+      "id": "complete",
+      "title": "Build full architecture first",
+      "description": "Full functionality before launch",
+      "parent_ids": [],
+      "evidence": [],
+      "open_questions": [],
+      "expected_utility": 96.0,
+      "execution_cost": 46.0,
+      "risk_loss": 20.0,
+      "feasible": true,
+      "values_source": "agent_estimate",
+      "created_by": "quality",
+      "created_in_round": 0
+    },
+    {
+      "id": "hybrid",
+      "title": "Staged rollout with feature flags",
+      "description": "Small pilot + automated gates and rollback",
+      "parent_ids": [
+        "fast",
+        "complete"
+      ],
+      "evidence": [],
+      "open_questions": [
+        "Who owns rollback checks?"
+      ],
+      "expected_utility": 93.0,
+      "execution_cost": 20.0,
+      "risk_loss": 8.0,
+      "feasible": true,
+      "values_source": "agent_estimate",
+      "created_by": "creative",
+      "created_in_round": 1
+    }
+  ],
+  "critiques": [
+    {
+      "target_id": "complete",
+      "claim": "Long lead time delays feedback",
+      "severity": "challenge",
+      "evidence": [],
+      "agent_id": "speed",
+      "round_number": 1
+    },
+    {
+      "target_id": "fast",
+      "claim": "Untested migrations may fail",
+      "severity": "risk_warning",
+      "evidence": [],
+      "agent_id": "quality",
+      "round_number": 1
+    },
+    {
+      "target_id": "hybrid",
+      "claim": "Feature flags require rollback owners",
+      "severity": "challenge",
+      "evidence": [],
+      "agent_id": "quality",
+      "round_number": 2
+    }
+  ],
+  "latest_positions": {
+    "speed": {
+      "support_ids": [
+        "fast",
+        "hybrid"
+      ],
+      "oppose_ids": [
+        "complete"
+      ],
+      "note": "Hybrid may be feasible"
+    },
+    "quality": {
+      "support_ids": [
+        "complete"
+      ],
+      "oppose_ids": [
+        "fast",
+        "hybrid"
+      ],
+      "note": ""
+    },
+    "creative": {
+      "support_ids": [
+        "hybrid"
+      ],
+      "oppose_ids": [
+        "complete"
+      ],
+      "note": ""
+    }
+  },
+  "dissents": [
+    {
+      "idea_id": "fast",
+      "supporters": [
+        "speed"
+      ],
+      "opponents": [
+        "quality"
+      ]
+    },
+    {
+      "idea_id": "complete",
+      "supporters": [
+        "quality"
+      ],
+      "opponents": [
+        "creative",
+        "speed"
+      ]
+    },
+    {
+      "idea_id": "hybrid",
+      "supporters": [
+        "creative",
+        "speed"
+      ],
+      "opponents": [
+        "quality"
+      ]
+    }
+  ],
+  "scores": [
+    {
+      "idea_id": "hybrid",
+      "net_utility": 65.0,
+      "expected_utility": 93.0,
+      "execution_cost": 20.0,
+      "risk_penalty": 8.0,
+      "feasible": true,
+      "values_source": "agent_estimate"
+    },
+    {
+      "idea_id": "fast",
+      "net_utility": 58.0,
+      "expected_utility": 82.0,
+      "execution_cost": 12.0,
+      "risk_penalty": 12.0,
+      "feasible": true,
+      "values_source": "agent_estimate"
+    },
+    {
+      "idea_id": "complete",
+      "net_utility": 30.0,
+      "expected_utility": 96.0,
+      "execution_cost": 46.0,
+      "risk_penalty": 20.0,
+      "feasible": true,
+      "values_source": "agent_estimate"
+    }
+  ],
+  "unscored_ids": [],
+  "traces": [
+    {
+      "round_number": 0,
+      "phase": "independent",
+      "contributions": [
+        {
+          "agent_id": "speed",
+          "new_ideas": [
+            {
+              "id": "fast",
+              "title": "Ship an MVP",
+              "description": "Short pilot with explicit scope",
+              "parent_ids": [],
+              "evidence": [],
+              "open_questions": [
+                "Is the MVP support burden acceptable?"
+              ],
+              "expected_utility": 82.0,
+              "execution_cost": 12.0,
+              "risk_loss": 12.0,
+              "feasible": true,
+              "values_source": "agent_estimate"
+            }
+          ],
+          "critiques": [],
+          "position": {
+            "support_ids": [
+              "fast"
+            ],
+            "oppose_ids": [],
+            "note": "Optimize speed"
+          },
+          "public_summary": "",
+          "reported_cost_usd": null
+        },
+        {
+          "agent_id": "quality",
+          "new_ideas": [
+            {
+              "id": "complete",
+              "title": "Build full architecture first",
+              "description": "Full functionality before launch",
+              "parent_ids": [],
+              "evidence": [],
+              "open_questions": [],
+              "expected_utility": 96.0,
+              "execution_cost": 46.0,
+              "risk_loss": 20.0,
+              "feasible": true,
+              "values_source": "agent_estimate"
+            }
+          ],
+          "critiques": [],
+          "position": {
+            "support_ids": [
+              "complete"
+            ],
+            "oppose_ids": [],
+            "note": "Reliability first"
+          },
+          "public_summary": "",
+          "reported_cost_usd": null
+        },
+        {
+          "agent_id": "creative",
+          "new_ideas": [],
+          "critiques": [],
+          "position": {
+            "support_ids": [],
+            "oppose_ids": [],
+            "note": "Need to inspect both approaches before proposing a synthesis"
+          },
+          "public_summary": "",
+          "reported_cost_usd": null
+        }
+      ],
+      "new_ids": [
+        "fast",
+        "complete"
+      ],
+      "errors": [],
+      "reported_cost_usd": 0.0
+    },
+    {
+      "round_number": 1,
+      "phase": "discussion",
+      "contributions": [
+        {
+          "agent_id": "speed",
+          "new_ideas": [],
+          "critiques": [
+            {
+              "target_id": "complete",
+              "claim": "Long lead time delays feedback",
+              "severity": "challenge",
+              "evidence": []
+            }
+          ],
+          "position": {
+            "support_ids": [
+              "fast"
+            ],
+            "oppose_ids": [
+              "complete"
+            ],
+            "note": "Still prefer fast release"
+          },
+          "public_summary": "",
+          "reported_cost_usd": null
+        },
+        {
+          "agent_id": "quality",
+          "new_ideas": [],
+          "critiques": [
+            {
+              "target_id": "fast",
+              "claim": "Untested migrations may fail",
+              "severity": "risk_warning",
+              "evidence": []
+            }
+          ],
+          "position": {
+            "support_ids": [
+              "complete"
+            ],
+            "oppose_ids": [
+              "fast"
+            ],
+            "note": ""
+          },
+          "public_summary": "",
+          "reported_cost_usd": null
+        },
+        {
+          "agent_id": "creative",
+          "new_ideas": [
+            {
+              "id": "hybrid",
+              "title": "Staged rollout with feature flags",
+              "description": "Small pilot + automated gates and rollback",
+              "parent_ids": [
+                "fast",
+                "complete"
+              ],
+              "evidence": [],
+              "open_questions": [
+                "Who owns rollback checks?"
+              ],
+              "expected_utility": 93.0,
+              "execution_cost": 20.0,
+              "risk_loss": 8.0,
+              "feasible": true,
+              "values_source": "agent_estimate"
+            }
+          ],
+          "critiques": [],
+          "position": {
+            "support_ids": [
+              "hybrid"
+            ],
+            "oppose_ids": [
+              "complete"
+            ],
+            "note": ""
+          },
+          "public_summary": "",
+          "reported_cost_usd": null
+        }
+      ],
+      "new_ids": [
+        "hybrid"
+      ],
+      "errors": [],
+      "reported_cost_usd": 0.0
+    },
+    {
+      "round_number": 2,
+      "phase": "discussion",
+      "contributions": [
+        {
+          "agent_id": "speed",
+          "new_ideas": [],
+          "critiques": [],
+          "position": {
+            "support_ids": [
+              "fast",
+              "hybrid"
+            ],
+            "oppose_ids": [
+              "complete"
+            ],
+            "note": "Hybrid may be feasible"
+          },
+          "public_summary": "",
+          "reported_cost_usd": null
+        },
+        {
+          "agent_id": "quality",
+          "new_ideas": [],
+          "critiques": [
+            {
+              "target_id": "hybrid",
+              "claim": "Feature flags require rollback owners",
+              "severity": "challenge",
+              "evidence": []
+            }
+          ],
+          "position": {
+            "support_ids": [
+              "complete"
+            ],
+            "oppose_ids": [
+              "fast",
+              "hybrid"
+            ],
+            "note": ""
+          },
+          "public_summary": "",
+          "reported_cost_usd": null
+        },
+        {
+          "agent_id": "creative",
+          "new_ideas": [],
+          "critiques": [],
+          "position": {
+            "support_ids": [
+              "hybrid"
+            ],
+            "oppose_ids": [
+              "complete"
+            ],
+            "note": ""
+          },
+          "public_summary": "",
+          "reported_cost_usd": null
+        }
+      ],
+      "new_ids": [],
+      "errors": [],
+      "reported_cost_usd": 0.0
+    }
+  ],
+  "reported_api_spent_usd": 0.0,
+  "notes": [
+    "Risk warning, budget overrun or review policy requires human review; never auto-executes.",
+    "Unresolved disagreements preserved; no forced consensus or judge override.",
+    "Agent-supplied numeric estimates are unverified hypotheses, not measured outcomes.",
+    "This system proposes only; it never executes selected actions."
+  ]
+}

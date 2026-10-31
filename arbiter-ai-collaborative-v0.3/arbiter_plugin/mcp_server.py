@@ -1,0 +1,51 @@
+"""Optional MCP adapter: deterministic scoring of host-submitted brainstorm transcripts."""
+from __future__ import annotations
+import os
+from typing import Any
+from .models import DecisionRequest, ResearchRequest, VerifiedOutcome
+from .core import evaluate_decision
+from .information import plan_information
+from .feedback import FeedbackStore
+from .collaboration import BrainstormRequest, RoundTrace, consolidate_brainstorm
+
+
+def create_mcp_server():
+    from mcp.server import MCPServer  # optional official SDK v2
+    server = MCPServer('Arbiter AI Collaborative', instructions=(
+        'Collect independent ideas and multiple rounds of open-ended discussion. '
+        'Preserve dissent and unscored ideas; propose only, do not execute actions.'))
+
+    @server.tool()
+    def arbiter_brainstorm(payload: dict[str, Any]) -> dict[str, Any]:
+        """Consolidate host-collected agent proposals/critiques; no meta-judge or forced consensus."""
+        req = BrainstormRequest.model_validate(payload['request'])
+        traces = [RoundTrace.model_validate(t) for t in payload.get('traces', [])]
+        return consolidate_brainstorm(req, traces).model_dump(mode='json')
+
+    @server.tool()
+    def arbiter_evaluate(payload: dict[str, Any]) -> dict[str, Any]:
+        """Score explicitly supplied options using deterministic utility and risk constraints."""
+        req = DecisionRequest.model_validate(payload)
+        store = FeedbackStore(os.getenv('ARBITER_DB', 'arbiter_feedback.sqlite'))
+        return evaluate_decision(req, store.reliability(req.domain)).model_dump(mode='json')
+
+    @server.tool()
+    def arbiter_plan_research(payload: dict[str, Any]) -> dict[str, Any]:
+        """Evaluate supplied information-value estimate vs cost."""
+        return plan_information(ResearchRequest.model_validate(payload)).model_dump(mode='json')
+
+    @server.tool()
+    def arbiter_record_verified_outcome(payload: dict[str, Any], confirm_record: bool = False) -> dict[str, Any]:
+        """Record verified outcome in local SQLite only after explicit approval."""
+        if not confirm_record:
+            raise ValueError('Explicit confirmation required: confirm_record=true')
+        return FeedbackStore(os.getenv('ARBITER_DB', 'arbiter_feedback.sqlite')).record(
+            VerifiedOutcome.model_validate(payload)).model_dump(mode='json')
+    return server
+
+
+def main():
+    create_mcp_server().run(transport='stdio')
+
+if __name__ == '__main__':
+    main()
