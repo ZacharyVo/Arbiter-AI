@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.0 — Restricted experiment runner and benchmark feedback
+
+- Added opt-in DockerExperimentRunner for controlled host-approved Python benchmarks and candidate code.
+- No network, non-root process, read-only input and container filesystem, dropped capabilities, and resource/time limits.
+- Structured benchmark results are stored unverified in the SharedBlackboard; benchmark.completed events notify subscribing agents.
+- Tests simulate the Docker CLI and verify restrictions, schema rejection, error behavior and feedback persistence.
+- No auto-merge, production execution or independent score attestation. Docker is not a complete hostile-code security guarantee.
+
+
 ## 0.6.0 — Shared Blackboard and event-based coordination
 
 - Added opt-in SQLite SharedBlackboard: scoped versioned artifacts, atomic change events, compare-and-swap updates and content-size validation.
