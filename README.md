@@ -15,8 +15,6 @@ PluralForge AI 是一个开源、通用、可插拔的**资源约束下自适应
 
 ## 1. What problems does it solve? / 产品能解决什么问题？
 
-**Start with business problems, not agent counts. / 先讲业务痛点，再看技术实现。**
-
 These four problems commonly arise in architecture selection, technical reviews and complex decisions where time, information and compute are limited.  
 在架构选型、技术评审及其他复杂决策中，企业经常面临以下四类问题：
 
