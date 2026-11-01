@@ -1,4 +1,4 @@
-"""PluralForge AI v0.7: cost-aware collective intelligence and decision optimization."""
+"""PluralForge AI v0.7.1: cost-aware collective intelligence and decision optimization."""
 from .models import (Option, Opinion, DecisionRequest, DecisionResult, ResearchOption,
                      ResearchRequest, ResearchRecommendation, VerifiedOutcome, OutcomeReceipt)
 from .core import evaluate_decision, disagreement_entropy
@@ -17,7 +17,8 @@ from .value_learning import (LearningContext, ActionCandidate, VerifiedValueObse
                              InformationValueLearner)
 from .blackboard import Artifact, Event, SharedBlackboard, EventWorker, VersionConflict
 from .experiments import DockerExperimentRunner, ExperimentResult, record_experiment
-__version__ = '0.7.0'
+from .experiment_routing import ExperimentEstimate, UnifiedActionRank, UnifiedRoute, select_research_or_experiment
+__version__ = '0.7.1'
 __all__ = ['Option', 'Opinion', 'DecisionRequest', 'DecisionResult', 'ResearchOption',
            'ResearchRequest', 'ResearchRecommendation', 'VerifiedOutcome', 'OutcomeReceipt',
            'evaluate_decision', 'disagreement_entropy', 'plan_information', 'FeedbackStore',
@@ -30,4 +31,5 @@ __all__ = ['Option', 'Opinion', 'DecisionRequest', 'DecisionResult', 'ResearchOp
            'LearningRequest', 'ActionForecast', 'LearningReport', 'LearningRoute',
            'InformationValueLearner', 'Artifact', 'Event', 'SharedBlackboard',
            'EventWorker', 'VersionConflict', 'DockerExperimentRunner',
-           'ExperimentResult', 'record_experiment']
+           'ExperimentResult', 'record_experiment', 'ExperimentEstimate',
+           'UnifiedActionRank', 'UnifiedRoute', 'select_research_or_experiment']
