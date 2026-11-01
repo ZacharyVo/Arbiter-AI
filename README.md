@@ -10,11 +10,11 @@
 >
 > **中文简介：** PluralForge AI 是通用、可插拔的多智能体协作决策框架。多个 Agent 先独立思考，再交叉质疑、组合创新方案、保留不同意见；系统根据预期信息价值、预算、风险和效用决定继续咨询、讨论、检索还是停止。它不是多数投票工具，也不由单个元裁判拍板。
 
-**Release / 版本：** v0.5 research MVP · Python 3.11+ · MIT · offline-first  
+**Release / 版本：** v0.6 research MVP · Python 3.11+ · MIT · offline-first  
 **Interfaces / 接口：** Python SDK · optional local REST API · optional MCP · optional LiteLLM  
 **Compatibility / 兼容性：** import from `pluralforge` (preferred); `arbiter_plugin` is retained for older applications.
 
-**Quick links / 快速导航：** [Workflow / 业务流程](#workflow--业务流程) · [Architecture / 技术架构](#architecture--技术架构) · [Installation](#installation) · [Information Value Learning](#information-value-learning-engine--new-v05) · [Benchmarks](#benchmarks-and-scientific-claims) · [中文快速开始](#中文快速开始)
+**Quick links / 快速导航：** [Workflow / 业务流程](#workflow--业务流程) · [Architecture / 技术架构](#architecture--技术架构) · [Installation](#installation) · [Information Value Learning](#information-value-learning-engine--new-v05) · [Shared Environment](docs/SHARED_ENVIRONMENT.md) · [Benchmarks](#benchmarks-and-scientific-claims) · [中文快速开始](#中文快速开始)
 
 ## Why this exists
 
@@ -80,7 +80,7 @@ flowchart LR
 
 **Implementation map / 代码位置：** `arbiter_plugin/collaboration.py` handles proposals, dissent and scoring; `adaptive.py` routes the next step; `value_learning.py` learns from verified history; `feedback.py` saves outcomes; `api.py` and `mcp_server.py` expose optional integration points. `pluralforge/` provides the preferred import path.
 
-### What is in v0.5
+### What is in v0.6
 
 | Component | What it actually does | Important boundary |
 |---|---|---|
@@ -94,6 +94,18 @@ flowchart LR
 | **Information Value Learning Engine (v0.5)** | Learns regularized per-action marginal gain and costs from evidence-attributed historical outcomes, with time-cutoff checks and abstention | Observational predictor only; **not causal VoI**, no learned hard spend cap |
 | Policy comparison | Scripted cross-domain cases comparing single agent, voting, fixed discussion and adaptive routing | Synthetic illustrations **are not real LLM benchmark results** |
 | Interfaces | Python SDK, optional local HTTP and MCP tools | MCP handshake and paid model integrations require environment-specific testing |
+| **Shared Blackboard (v0.6)** | SQLite-scoped shared state, event history, durable subscriptions and bounded dispatch | Host must invoke workers; no automatic tool execution or authentication |
+| **Code references (v0.6)** | Store branch/commit/hash metadata as inert artifacts | No code execution, sandboxing or automatic merging |
+
+## Shared environment / 共享环境 · v0.6
+
+The optional shared blackboard lets multiple agents observe **persistent changes** rather than repeatedly exchanging entire discussion transcripts. SQLite stores versioned artifacts, append-only events and per-consumer checkpoints. An agent may record proposals, external-environment observations, experiment reports and references to code commits; another agent subscribes to the relevant event type and produces a critique or new hypothesis.
+
+The new API is `SharedBlackboard`, `EventWorker` and `VersionConflict` from `pluralforge`. It is additive: the existing `run_brainstorm` behavior and its independent first round do not change. Workers only run when explicitly invoked by a host, and all generated claims begin unverified. Code references are never executed by this module.
+
+Run the offline event-driven example: `python -m examples.blackboard_demo`.
+
+Full design, usage, caveats and v0.7 roadmap: [Shared Environment / 共享环境](docs/SHARED_ENVIRONMENT.md).
 
 ## Installation
 
@@ -107,6 +119,7 @@ python -m examples.adaptive_demo
 python -m examples.value_learning_demo
 python -m benchmarks.learning_temporal_replay
 python -m examples.collaborative_demo
+python -m examples.blackboard_demo
 python -m benchmarks.compare_policies
 python -m pytest
 ```
