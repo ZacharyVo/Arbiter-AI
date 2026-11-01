@@ -1,4 +1,4 @@
-"""PluralForge AI v0.5: cost-aware collective intelligence and decision optimization."""
+"""PluralForge AI v0.6: cost-aware collective intelligence and decision optimization."""
 from .models import (Option, Opinion, DecisionRequest, DecisionResult, ResearchOption,
                      ResearchRequest, ResearchRecommendation, VerifiedOutcome, OutcomeReceipt)
 from .core import evaluate_decision, disagreement_entropy
@@ -15,7 +15,8 @@ from .novelty import NoveltyFlag, surface_duplicate_flags
 from .value_learning import (LearningContext, ActionCandidate, VerifiedValueObservation,
                              LearningRequest, ActionForecast, LearningReport, LearningRoute,
                              InformationValueLearner)
-__version__ = '0.5.0'
+from .blackboard import Artifact, Event, SharedBlackboard, EventWorker, VersionConflict
+__version__ = '0.6.0'
 __all__ = ['Option', 'Opinion', 'DecisionRequest', 'DecisionResult', 'ResearchOption',
            'ResearchRequest', 'ResearchRecommendation', 'VerifiedOutcome', 'OutcomeReceipt',
            'evaluate_decision', 'disagreement_entropy', 'plan_information', 'FeedbackStore',
@@ -26,4 +27,5 @@ __all__ = ['Option', 'Opinion', 'DecisionRequest', 'DecisionResult', 'ResearchOp
            'RouteDecision', 'select_next_action', 'NoveltyFlag', 'surface_duplicate_flags', 'ScriptedBrainstormAgent', 'LiteLLMBrainstormAgent',
            'LearningContext', 'ActionCandidate', 'VerifiedValueObservation',
            'LearningRequest', 'ActionForecast', 'LearningReport', 'LearningRoute',
-           'InformationValueLearner']
+           'InformationValueLearner', 'Artifact', 'Event', 'SharedBlackboard',
+           'EventWorker', 'VersionConflict']

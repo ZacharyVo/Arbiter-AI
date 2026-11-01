@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.6.0 — Shared Blackboard and event-based coordination
+
+- Added opt-in SQLite SharedBlackboard: scoped versioned artifacts, atomic change events, compare-and-swap updates and content-size validation.
+- Added append-only event records, durable per-consumer cursors, filtered subscriptions, idempotent event publishing and a bounded async/sync EventWorker.
+- Agents may share ideas, state, benchmark observations and inert references to code branches/commits. No arbitrary code execution, merge or external actions.
+- Added host-attested verification metadata; changed artifacts reset to unverified. This is a host-side trust convention, not access control.
+- Added offline end-to-end event demo, 12 regression tests and bilingual usage documentation.
+- Preserved the independent first round, dissent, cost-aware router, human-review boundaries and existing v0.5 public API.
+
+**Limitations:** no autonomous daemon, server auth, agent tool sandbox, automatic code merge or direct integration into the existing run_brainstorm loop.
+
+
 ## 0.5.0 — Information Value Learning Engine
 
 - Added `arbiter_plugin.value_learning`: host-attested evidence logging in local SQLite, idempotent writes, strict as-of data availability checks and context/domain/unit isolation.
