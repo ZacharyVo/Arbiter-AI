@@ -13,7 +13,33 @@ PluralForge AI 是一个开源、通用、可插拔的**资源约束下自适应
 
 ![Offline demo preview](docs/preview.png)
 
-## 1. The problem / 我们解决什么问题？
+## 1. What problems does it solve? / 产品能解决什么问题？
+
+**Start with business problems, not agent counts. / 先讲业务痛点，再看技术实现。**
+
+These four problems commonly arise in architecture selection, technical reviews and complex decisions where time, information and compute are limited.  
+在架构选型、技术评审及其他复杂决策中，企业经常面临以下四类问题：
+
+1. **避免“只投票、不形成更优选项” / Go beyond voting to generate better alternatives**  
+   实现 Agent 独立提案、交叉质疑、组合创新与分歧保留，输出可比较的候选方案和讨论依据，适用于架构选型及复杂方案评审。  
+   *Agents independently propose, challenge and synthesize alternatives. The system preserves dissent and returns comparable options with an auditable rationale instead of treating majority voting as a final answer.*
+
+2. **减少“重复讨论却不知何时停止” / Know when more discussion is worth the cost**  
+   基于预期信息收益、效用成本及 API 预算，推荐继续讨论、单独咨询、检索或停止；再将经批准的实验纳入下一步价值比较，避免无依据地增加调用。  
+   *Compare marginal information value, utility cost and API budget to recommend further discussion, targeted consultation, evidence retrieval or stopping. Host-approved experiments can also be compared as an optional next step.*
+
+3. **解决“信息散落、无法追溯和复用” / Make evidence and decisions traceable and reusable**  
+   利用 SQLite 共享黑板、版本化状态、事件订阅及历史反馈记录，让 Agent 围绕新证据协作，同时保留来源、反对意见和核验状态。  
+   *A SQLite shared blackboard, versioned state, event subscriptions and feedback records help agents respond to new information while retaining provenance, opposing views and verification status.*
+
+4. **补足“方案难验证”的环节 / Provide a path from proposals to testable evidence**  
+   提供可选 Docker 受限 Benchmark 执行、结果回写与风险边界；交付 Python SDK、离线示例和自动化测试（GitHub Actions Python 3.11/3.12 通过）。研究 MVP，尚未证明真实场景中的效率提升。  
+   *An optional constrained Docker benchmark runner records results and notifies other agents. The research MVP includes a Python SDK, offline demos and automated CI tests on Python 3.11/3.12; real-world productivity or decision-quality improvements have **not** yet been established.*
+
+**In one sentence / 一句话总结：** PluralForge AI helps teams **choose better options and decide which additional work is worth doing** under limited resources.  
+PluralForge AI 关注的不是让 AI 讨论得更多，而是**让团队在有限资源下比较方案、验证关键假设，并判断何时应该停止投入**。
+
+### The two decision questions / 两层决策问题
 
 More agents, more tokens and longer debates do not automatically produce better decisions.
 
