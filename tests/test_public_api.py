@@ -3,7 +3,10 @@ from fastapi.testclient import TestClient
 
 def test_new_facade_exports_public_sdk():
     import pluralforge as p
-    assert p.__version__=='0.5.0'
+    from importlib.metadata import version
+    assert p.__version__ == version('pluralforge-ai')
+    assert callable(p.SharedBlackboard)
+    assert callable(p.EventWorker)
     assert p.select_next_action is not None
 
 
