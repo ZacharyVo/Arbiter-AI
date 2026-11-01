@@ -16,7 +16,7 @@ PluralForge AI 是一个开源、通用、可插拔的**资源约束下自适应
 ## 1. What problems does it solve? / 产品能解决什么问题？
 
 These four problems commonly arise in architecture selection, technical reviews and complex decisions where time, information and compute are limited.  
-在架构选型、技术评审及其他复杂决策中，企业经常面临以下四类问题：
+在架构选型、技术评审及其他复杂决策中，经常面临以下四类问题：
 
 1. **避免“只投票、不形成更优选项” / Go beyond voting to generate better alternatives**  
    实现 Agent 独立提案、交叉质疑、组合创新与分歧保留，输出可比较的候选方案和讨论依据，适用于架构选型及复杂方案评审。  
