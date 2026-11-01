@@ -10,7 +10,7 @@
 >
 > **中文简介：** PluralForge AI 是通用、可插拔的多智能体协作决策框架。多个 Agent 先独立思考，再交叉质疑、组合创新方案、保留不同意见；系统根据预期信息价值、预算、风险和效用决定继续咨询、讨论、检索还是停止。它不是多数投票工具，也不由单个元裁判拍板。
 
-**Release / 版本：** v0.7 research MVP · Python 3.11+ · MIT · offline-first  
+**Release / 版本：** v0.7.1 research MVP · Python 3.11+ · MIT · offline-first  
 **Interfaces / 接口：** Python SDK · optional local REST API · optional MCP · optional LiteLLM  
 **Compatibility / 兼容性：** import from `pluralforge` (preferred); `arbiter_plugin` is retained for older applications.
 
@@ -112,6 +112,10 @@ Full design, usage, caveats and v0.7 roadmap: [Shared Environment / 共享环境
 Opt-in `DockerExperimentRunner` executes host-approved benchmark scripts with candidate Python code in a constrained Docker container (network disabled, read-only mounts, non-root user, bounded resources). `record_experiment` writes metrics to the shared blackboard and emits `benchmark.completed` for critic agents. Results are initially unverified, and no agent is authorized to merge code or deploy changes.
 
 **Requires a trusted host, a reviewed benchmark, a separately installed Docker engine, and dedicated runtime isolation for adversarial workloads.** The runner is not an autonomous agent, an automatic benchmark-authoring system, or a guarantee against container escapes. See [Experiment runner / 实验执行器](docs/EXPERIMENTS.md).
+
+## Unified next-step routing / 统一下一步路由 · v0.7.1
+
+`select_research_or_experiment` compares approved experiment candidates with the existing discussion/retrieval forecasts using common decision-utility units, but separate API and experiment cash budgets. It **only recommends** the next action: the host must approve and invoke the sandbox independently. Existing `run_brainstorm` is unchanged and does not auto-execute experiments. See [the unified routing guide](docs/EXPERIMENT_ROUTING.md).
 
 ## Installation
 

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pluralforge-ai"
-version = "0.7.0"
+version = "0.7.1"
 description = "Cost-aware collective intelligence and auditable multi-agent decision optimization"
 readme = "README.md"
 requires-python = ">=3.11"

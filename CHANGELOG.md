@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.1 — Unified next-step recommendation (additive)
+
+- Added advisory experiment-vs-discussion-vs-retrieval-vs-stop router with explicit experiment hypotheses, human approval gating, and independent cash limits.
+- Supports passing previously generated value-learning forecasts without treating unverified experiment outputs as learned gains.
+- Added deterministic regression tests and usage documentation.
+- Existing brainstorm engine does not automatically invoke experiments.
+
+
 ## 0.7.0 — Restricted experiment runner and benchmark feedback
 
 - Added opt-in DockerExperimentRunner for controlled host-approved Python benchmarks and candidate code.
